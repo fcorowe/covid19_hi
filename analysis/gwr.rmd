@@ -3,7 +3,7 @@
 
 ## Set your working directory
 
-setwd("c:/Users/Cait Robinson/Documents/UK2070")
+setwd("covid19_hi")
 getwd()
 
 ## Install relevant libraries
@@ -15,7 +15,7 @@ library(tidyr)
 
 ## Download csv. file for daily cases and create new dataframe.
 
-dailycases_df <- read.csv("cases_daily_spare3.csv", check.names=FALSE)
+dailycases_df <- read.csv("cases_daily.csv", check.names=FALSE)
 
 ## Download other contextual data from PHE
 
