@@ -1,0 +1,670 @@
+
+# Setting up the analysis 
+
+## Set your working directory
+
+setwd("c:/Users/Cait Robinson/Documents/UK2070")
+getwd()
+
+## Install relevant libraries
+
+library(dplyr)
+library(tidyr)
+
+# Download relevant data
+
+## Download csv. file for daily cases and create new dataframe.
+
+dailycases_df <- read.csv("cases_daily_spare3.csv", check.names=FALSE)
+
+## Download other contextual data from PHE
+
+context_df <- read.csv("context.csv", check.names=FALSE)
+
+## Merge the two datasets
+
+covid <- merge(dailycases_df, context_df, by.x = "ctyua19cd", by.y = "ctyua19cd") 
+
+# Sorting out variables
+
+## Replace NA values in the dataframe
+
+covid <- covid %>%
+  mutate_at(c(4:441), ~replace(., is.na(.), 0))
+
+## Calculate mean values for each period (Start Wave 1, Peak Wave 1, Start Wave 2, Peak Wave 2)
+
+covid$startwave1_mean <- rowMeans(covid[19:21], na.rm=TRUE) # select week beginning 23rd March
+covid$peakwave1_mean <- rowMeans(covid[41:47], na.rm=TRUE) # select week beginning 6th April
+covid$startwave2_mean <- rowMeans(covid[223:229], na.rm=TRUE) # select week beginning 5th October
+covid$peakwave2_mean <- rowMeans(covid[258:264], na.rm=TRUE) # select week beginning 2nd November
+
+## Recalculate COVID daily means as a proportion of the population (per 100,000 persons)
+
+covid <- covid %>%
+  mutate(startwave1_prop = (startwave1_mean/(Residents/100000)),
+  peakwave1_prop = (peakwave1_mean/(Residents/100000)),
+  startwave2_prop = (startwave2_mean/(Residents/100000)),
+  peakwave2_prop = (peakwave2_mean/(Residents/100000)))
+
+## Recalculate selected variables as percentages
+
+covid <- covid %>%
+  mutate(Crowded_housing_per = (Crowded_housing/Households)*100, 
+  Private_rented_per = (Private_rented/Households)*100, 
+  Young_per = (Age_0_to_19/Residents)*100, 
+  Students_per = (All_fulltime_students/Households)*100, 
+  Social_rented_per = (Social_rented/Households)*100, 
+  Longtermill_per = (Long_term_ill/Residents)*100, 
+  Unpaidcare_per = (Provides_unpaid_care/Residents)*100, 
+  Public_Transport_per = (Public_Transport/Aged_16_to_74)*100, 
+  No_car_per = (Cars_0/Households)*100, 
+  Routine_occupations_per = ((Routine_occupations + Semi_routine_occupations)/Aged_16_to_74)*100, 
+  Transport_occupations_per = (Transport_and_storage/Aged_16_to_74)*100, 
+  Health_occupations_per = (Human_health_and_social_work/Aged_16_to_74)*100, 
+  Hospitality_occupations_per = (Accommodation_and_food_service/Aged_16_to_74)*100, 
+  Pop_density = log(Residents / (st_areasha/1000000)), 
+  Work_from_home_per = (Work_from_home / Residents) * 100)
+  
+covid <- covid %>%
+  rename("IMDMostDeprived" = "IMD - Proportion of LSOAs in most deprived 10% nationally")
+  
+## Recalculate physical activity as physical inactivity
+
+covid <- covid %>%
+  mutate(Physical_Activity = (100 - Physical_Activity))
+
+covid <- covid %>%
+  rename("Physical_Inactivity" = "Physical_Activity")
+  
+## Calculate z-scores to standardise variables of interest
+
+covid <- covid %>%
+mutate(CrowdedHousing_zscore = (Crowded_housing_per - mean(Crowded_housing_per))/sd(Crowded_housing_per),
+PrivateRent_zscore = (Private_rented_per - mean(Private_rented_per))/sd(Private_rented_per),
+Young_zscore = (Young_per - mean(Young_per))/sd(Young_per),
+Students_zscore = (Students_per - mean(Students_per))/sd(Students_per),
+SocialRent_zscore = (Social_rented_per - mean(Social_rented_per))/sd(Social_rented_per),
+LongTermIll_zscore = (Longtermill_per - mean(Longtermill_per))/sd(Longtermill_per),
+UnpaidCare_zscore = (Unpaidcare_per - mean(Unpaidcare_per))/sd(Unpaidcare_per),
+PublicTransport_zscore = (Public_Transport_per - mean(Public_Transport_per))/sd(Public_Transport_per),
+NoCar_zscore = (No_car_per - mean(No_car_per))/sd(No_car_per),
+RoutineOccupation_zscore = (Routine_occupations_per - mean(Routine_occupations_per))/sd(Routine_occupations_per),
+TransportOccupation_zscore = (Transport_occupations_per - mean(Transport_occupations_per))/sd(Transport_occupations_per),
+HealthOccupation_zscore = (Health_occupations_per - mean(Health_occupations_per))/sd(Health_occupations_per),
+HospitalityOccupation_zscore = (Hospitality_occupations_per - mean(Hospitality_occupations_per))/sd(Hospitality_occupations_per),
+PopulationDensity_zscore = (Pop_density - mean(Pop_density))/sd(Pop_density),
+WorkfromHome_zscore = (Work_from_home_per - mean(Work_from_home_per))/sd(Work_from_home_per),
+EthnicMinority_zscore = (Ethnic_Minority - mean(Ethnic_Minority))/sd(Ethnic_Minority),
+OlderPersons_zscore = (OlderPersons - mean(OlderPersons))/sd(OlderPersons),
+LEMale_zscore = (LEInequality_Male - mean(LEInequality_Male))/sd(LEInequality_Male),
+LEFemale_zscore = (LEInequality_Female - mean(LEInequality_Female))/sd(LEInequality_Female),
+PhysicalInactivity_zscore = (Physical_Inactivity - mean(Physical_Inactivity))/sd(Physical_Inactivity),
+Smoking_zscore = (Smoking - mean(Smoking))/sd(Smoking),
+Obesity_zscore = (Obesity - mean(Obesity))/sd(Obesity),
+Diabetes_zscore = (Diabetes - mean(Diabetes))/sd(Diabetes),
+FuelPoverty_zscore = (FuelPoverty - mean(FuelPoverty))/sd(FuelPoverty),
+LowIncomeChild_zscore = (LowIncome_Child - mean(LowIncome_Child))/sd(LowIncome_Child),
+IMD_zscore = (IMDMostDeprived - mean(IMDMostDeprived))/sd(IMDMostDeprived)
+)
+
+names(covid)
+
+## Select all variables of interest and create a new summary table
+
+Summary_table <- covid %>%
+  select("ctyua19cd","ctyua19nm.x", "startwave1_prop", "peakwave1_prop", "startwave2_prop", "peakwave2_prop", "PrivateRent_zscore", "SocialRent_zscore", "CrowdedHousing_zscore", "PublicTransport_zscore", "NoCar_zscore", "RoutineOccupation_zscore", "HealthOccupation_zscore", "TransportOccupation_zscore", "HospitalityOccupation_zscore", "EthnicMinority_zscore", "Students_zscore", "Young_zscore", "OlderPersons_zscore", "LongTermIll_zscore", "UnpaidCare_zscore", "LEMale_zscore", "LEFemale_zscore", "PhysicalInactivity_zscore",  "Smoking_zscore", "Obesity_zscore", "Diabetes_zscore", "FuelPoverty_zscore", "LowIncomeChild_zscore",  "IMD_zscore", "PopulationDensity_zscore", "WorkfromHome_zscore")
+
+
+## Rename variables for clarity in new table
+
+Summary_table <- Summary_table %>%
+  rename("LA code" = "ctyua19cd", "LA name" = "ctyua19nm.x", "Start_Wave1" = "startwave1_prop", "Peak_Wave1" = "peakwave1_prop", "Start_Wave2" = "startwave2_prop", "Peak_Wave2" = "peakwave2_prop", "PrivateRent" = "PrivateRent_zscore", "SocialRent" = "SocialRent_zscore", "CrowdedHousing" = "CrowdedHousing_zscore", "PublicTransport" = "PublicTransport_zscore", "NoCar" = "NoCar_zscore", "RoutineOccupation" = "RoutineOccupation_zscore", "HealthOccupation" = "HealthOccupation_zscore", "TransportOccupation" = "TransportOccupation_zscore", "HospitalityOccupation" = "HospitalityOccupation_zscore", "EthnicMinority" = "EthnicMinority_zscore", "Students" = "Students_zscore", "Young" = "Young_zscore", "OlderPersons" = "OlderPersons_zscore", "LongTermIll" = "LongTermIll_zscore", "UnpaidCare" = "UnpaidCare_zscore", "LEInequalityMale" = "LEMale_zscore", "LEInequalityFemale" = "LEFemale_zscore", "PhysicalInactivity" = "PhysicalInactivity_zscore",  "Smoking" = "Smoking_zscore", "Obesity" = "Obesity_zscore","Diabetes" = "Diabetes_zscore", "FuelPoverty" =  "FuelPoverty_zscore", "LowIncomeChild" = "LowIncomeChild_zscore",  "IMDMostDeprived" = "IMD_zscore", "PopulationDensity" = "PopulationDensity_zscore", "WorkfromHome" = "WorkfromHome_zscore")
+  
+names(Summary_table)
+
+# Creating corrplots
+
+## Select and rename variables for corrplots
+
+Summary_select <- Summary_table %>%
+  select("Start_Wave1", "Peak_Wave1", "Start_Wave2", "Peak_Wave2", "PopulationDensity", "PrivateRent", "SocialRent", "CrowdedHousing", "PublicTransport", "NoCar", "RoutineOccupation", "WorkfromHome", "HealthOccupation", "TransportOccupation", "HospitalityOccupation", "EthnicMinority", "Students", "Young", "OlderPersons", "LongTermIll", "UnpaidCare", "PhysicalInactivity","Smoking", "Obesity", "Diabetes", "FuelPoverty", "LEInequalityMale", "LEInequalityFemale", "LowIncomeChild", "IMDMostDeprived")
+
+Summary_select <- Summary_select %>%
+  rename("Start W1" = "Start_Wave1", "Peak w1" = "Peak_Wave1", "Start W2" = "Start_Wave2", "Peak W2" = "Peak_Wave2", "Population density" = "PopulationDensity", "Private renting" = "PrivateRent", "Social renting" = "SocialRent", "Overcrowding" = "CrowdedHousing", "Public transport" = "PublicTransport", "No car ownership" = "NoCar", "Routine occupation" = "RoutineOccupation", "Work from home" = "WorkfromHome", "Health occupation" = "HealthOccupation", "Transport occupation" = "TransportOccupation", "Hospitality occupation" = "HospitalityOccupation", "Ethnic minority" = "EthnicMinority", "Full-time students" = "Students", "Young persons" = "Young", "Older persons" = "OlderPersons", "Long-term ill health" = "LongTermIll", "Unpaid care" = "UnpaidCare", "Physical inactivity" = "PhysicalInactivity", "Smoking" = "Smoking", "Obesity" = "Obesity", "Diabetes" = "Diabetes", "Fuel poverty" = "FuelPoverty", "LE inequality (male)" = "LEInequalityMale", "LE inequality (female)" = "LEInequalityFemale", "Low income children" = "LowIncomeChild", "Multiple deprivation" = "IMDMostDeprived")
+
+## Install relevant libraries
+
+library("devtools")
+library("corrplot")
+library(tidyverse)
+library(spgwr)
+library(tmap)
+library(sf)
+library(viridis)
+library(car)
+
+## Calculate signifiance
+
+sig1 <- corrplot::cor.mtest(Summary_select, conf.level = .95)
+
+## Calculate correlations
+
+c <- cor(Summary_select, method = "pearson", use = "complete.obs")
+
+## Export final correlation plot as a high resolution tiff image
+
+tiff("corrplot_final.tiff", width = 3000, height = 3000, res = 300)
+corrplot(c, tl.col="black", method = "square", order="original", tl.cex=0.7, p.mat=sig1$p, sig.level=.05, col= viridis::viridis(100, option = "plasma"))
+dev.off()
+
+# Geographically weighted regression (GWR)
+
+## Install relevant libraries
+
+library(sf)
+library(ggplot2)
+library(tidyverse)
+library(spgwr)
+library(tmap)
+library(sf)
+library(viridis)
+library(car)
+
+## Import the UTLA shapefile and plot it. Notice that its for the whole of the UK.
+
+LA_sf <- st_read("Counties_and_Unitary_Authorities__December_2019__Boundaries_UK_BFC.shp")
+LA_sf_england <- slice(LA_sf, 1:151) # Slice for England
+LA_sf_england_var <- merge(LA_sf_england, Summary_table, by.x = "ctyua19cd", by.y = "LA code")
+
+## Set colour palette for mapping GWR coefficients using RColorBrewer
+
+library(RColorBrewer)
+display.brewer.all(type="div") # See range of diverging palettes available
+pal <- rev(RColorBrewer::brewer.pal(11, "RdYlBu"))
+
+## Model specification for Start Wave 2
+
+m1_startwave2 <- round(Start_Wave2, 0) ~ PopulationDensity + WorkfromHome + PrivateRent + SocialRent + PublicTransport + TransportOccupation + HospitalityOccupation + EthnicMinority + Students + Young + OlderPersons + LongTermIll + Obesity + IMDMostDeprived
+
+### OLS regression
+
+ols_startwave2 <- lm(formula = m1_startwave2, data = LA_sf_england_var) # Carry out OLs regression prior to GWR
+summary(ols_startwave2)
+
+vif(ols_startwave2) # Check Variance Inflation Factor to ensure no variables are highly correlated
+
+### Quasi-poisson GWR regression
+
+bw_quasipoissonm1startwave2 <- ggwr.sel(m1_startwave2, # GWR bandwidth
+                                 data = LA_sf_england_var,
+                                 family= quasipoisson(),
+                                 coords=cbind(long, lat),
+                                 adapt = TRUE, 
+                                 longlat=TRUE,  
+                                 verbose = FALSE)
+
+nc_quasipoissonm1startwave2 <- ggwr(m1_startwave2, # Fit GWR model
+                             data = LA_sf_england_var,
+                             family = quasipoisson(),
+                             coords = cbind(long, lat),
+                             longlat = TRUE, 
+                             adapt = bw_quasipoissonm1startwave2)
+nc_quasipoissonm1startwave2
+
+nc_quasipoissonm1startwave2_out <- as.data.frame(nc_quasipoissonm1startwave2$SDF) # Extract SpatialDataFrame
+LA_sf_england_var$WR_m1startwave2 <- nc_quasipoissonm1startwave2_out$working_resids # Working residuals provide a good diagnostic for model fit
+
+### Mapping gwr working residuals 
+
+legend_title = expression("Start Wave 2 (week c/ 5th October)") # Map working residuals
+tm_shape(LA_sf_england_var) +
+  tm_fill(col = "WR_m1startwave2", title = legend_title, palette = magma(256), style = "cont") + # add fill
+  tm_scale_bar(breaks = c(0,1,2), text.size = 0.7, position =  c("center", "bottom")) +
+  tm_layout(bg.color = "white", 
+            frame= NA)
+            
+### Mapping GWR coefficient estimates
+
+LA_sf_england_var$m1startwave2_PopulationDensity <- nc_quasipoissonm1startwave2_out$PopulationDensity # Select variables
+LA_sf_england_var$m1startwave2_WorkfromHome <- nc_quasipoissonm1startwave2_out$WorkfromHome
+LA_sf_england_var$m1startwave2_PrivateRent <- nc_quasipoissonm1startwave2_out$PrivateRent
+LA_sf_england_var$m1startwave2_SocialRent <- nc_quasipoissonm1startwave2_out$SocialRent
+LA_sf_england_var$m1startwave2_PublicTransport <- nc_quasipoissonm1startwave2_out$PublicTransport
+LA_sf_england_var$m1startwave2_TransportOccupation <- nc_quasipoissonm1startwave2_out$TransportOccupation
+LA_sf_england_var$m1startwave2_HospitalityOccupation <- nc_quasipoissonm1startwave2_out$HospitalityOccupation
+LA_sf_england_var$m1startwave2_EthnicMinority <- nc_quasipoissonm1startwave2_out$EthnicMinority
+LA_sf_england_var$m1startwave2_Students <- nc_quasipoissonm1startwave2_out$Students
+LA_sf_england_var$m1startwave2_Young <- nc_quasipoissonm1startwave2_out$Young
+LA_sf_england_var$m1startwave2_OlderPersons <- nc_quasipoissonm1startwave2_out$OlderPersons
+LA_sf_england_var$m1startwave2_LongTermIll <- nc_quasipoissonm1startwave2_out$LongTermIll
+LA_sf_england_var$m1startwave2_Obesity <- nc_quasipoissonm1startwave2_out$Obesity
+LA_sf_england_var$m1startwave2_IMDMostDeprived <- nc_quasipoissonm1startwave2_out$IMDMostDeprived
+
+startwave2_PopulationDensity <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave2_PopulationDensity", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+startwave2_WorkfromHome<- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave2_WorkfromHome", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+            
+startwave2_PrivateRent <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave2_PrivateRent", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(main.title = "Private renting", main.title.position = "center", bg.color = "white", frame= NA, legend.show = FALSE)
+
+startwave2_SocialRent <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave2_SocialRent", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(main.title = "Social renting", main.title.position = "center", bg.color = "white", frame= NA, legend.show = FALSE)
+
+startwave2_PublicTransport <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave2_PublicTransport", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+  
+startwave2_TransportOccupation <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave2_TransportOccupation", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(main.title = "Transport occupation", main.title.position = "center", bg.color = "white", frame= NA, legend.show = FALSE)
+
+startwave2_HospitalityOccupation <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave2_HospitalityOccupation", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(main.title = "Hospitality occupation", main.title.position = "center", bg.color = "white", frame= NA, legend.show = FALSE)
+
+startwave2_EthnicMinority <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave2_EthnicMinority", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+  
+startwave2_Students <- tm_shape(LA_sf_england_var) +
+tm_fill(col = "m1startwave2_Students", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+startwave2_Young <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave2_Young", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+  
+startwave2_OlderPersons <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave2_OlderPersons", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+  
+startwave2_LongTermIll <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave2_LongTermIll", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+            
+startwave2_Obesity <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave2_Obesity", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(main.title = "Obesity", main.title.position = "center", bg.color = "white", frame= NA, legend.show = FALSE)
+
+startwave2_IMDMostDeprived <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave2_IMDMostDeprived", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+tiff("startwave2_coefficientest.tiff", width = 4000, height = 3000, res = 300) # Export tiff of coefficient estimates for all variables 
+tmap_arrange(startwave2_PopulationDensity, startwave2_PrivateRent, startwave2_SocialRent, startwave2_PublicTransport, startwave2_WorkfromHome, startwave2_TransportOccupation, startwave2_HospitalityOccupation, startwave2_EthnicMinority, startwave2_Students, startwave2_Young, startwave2_OlderPersons, startwave2_LongTermIll, startwave2_Obesity, startwave2_IMDMostDeprived)
+dev.off()
+
+## Model specification Peak Wave 2
+
+m1_peakwave2 <- round(Peak_Wave2, 0) ~ PopulationDensity + WorkfromHome + PrivateRent + SocialRent + PublicTransport + TransportOccupation + HospitalityOccupation + EthnicMinority + Students + Young + OlderPersons + LongTermIll + Obesity + IMDMostDeprived
+
+### OLS regression
+
+ols_peakwave2 <- lm(formula = m1_peakwave2, data = LA_sf_england_var)
+summary(ols_peakwave2)
+
+vif(ols_peakwave2)
+
+### Quassi-poisson GWR
+
+bw_quasipoissonm1peakwave2 <- ggwr.sel(m1_peakwave2,
+                                 data = LA_sf_england_var,
+                                 family= quasipoisson(),
+                                 coords=cbind(long, lat),
+                                 adapt = TRUE, 
+                                 longlat=TRUE,  
+                                 verbose = FALSE)
+
+nc_quasipoissonm1peakwave2 <- ggwr(m1_peakwave2, 
+                             data = LA_sf_england_var,
+                             family = quasipoisson(),
+                             coords = cbind(long, lat),
+                             longlat = TRUE, 
+                             adapt = bw_quasipoissonm1peakwave2)
+nc_quasipoissonm1peakwave2
+
+### Mapping working residuals
+
+nc_quasipoissonm1peakwave2_out <- as.data.frame(nc_quasipoissonm1peakwave2$SDF)
+LA_sf_england_var$WR_m1peakwave2 <- nc_quasipoissonm1peakwave2_out$working_resids
+
+legend_title = expression("Peak Wave 2 (week c/ 9th November)")
+tm_shape(LA_sf_england_var) +
+  tm_fill(col = "WR_m1peakwave2", title = legend_title, palette = magma(256), style = "cont") + # add fill
+  tm_scale_bar(breaks = c(0,1,2), text.size = 0.7, position =  c("center", "bottom")) +
+  tm_layout(bg.color = "white", 
+            frame= NA)
+
+### Mapping coefficients estimates
+
+LA_sf_england_var$m1peakwave2_PopulationDensity <- nc_quasipoissonm1peakwave2_out$PopulationDensity
+LA_sf_england_var$m1peakwave2_WorkfromHome <- nc_quasipoissonm1peakwave2_out$WorkfromHome
+LA_sf_england_var$m1peakwave2_PrivateRent <- nc_quasipoissonm1peakwave2_out$PrivateRent
+LA_sf_england_var$m1peakwave2_SocialRent <- nc_quasipoissonm1peakwave2_out$SocialRent
+LA_sf_england_var$m1peakwave2_PublicTransport <- nc_quasipoissonm1peakwave2_out$PublicTransport
+LA_sf_england_var$m1peakwave2_TransportOccupation <- nc_quasipoissonm1peakwave2_out$TransportOccupation
+LA_sf_england_var$m1peakwave2_HospitalityOccupation <- nc_quasipoissonm1peakwave2_out$HospitalityOccupation
+LA_sf_england_var$m1peakwave2_EthnicMinority <- nc_quasipoissonm1peakwave2_out$EthnicMinority
+LA_sf_england_var$m1peakwave2_Students <- nc_quasipoissonm1peakwave2_out$Students
+LA_sf_england_var$m1peakwave2_Young <- nc_quasipoissonm1peakwave2_out$Young
+LA_sf_england_var$m1peakwave2_OlderPersons <- nc_quasipoissonm1peakwave2_out$OlderPersons
+LA_sf_england_var$m1peakwave2_LongTermIll <- nc_quasipoissonm1peakwave2_out$LongTermIll
+LA_sf_england_var$m1peakwave2_Obesity <- nc_quasipoissonm1peakwave2_out$Obesity
+LA_sf_england_var$m1peakwave2_IMDMostDeprived <- nc_quasipoissonm1peakwave2_out$IMDMostDeprived
+
+peakwave2_PopulationDensity <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave2_PopulationDensity", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+peakwave2_WorkfromHome<- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave2_WorkfromHome", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+peakwave2_PrivateRent <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave2_PrivateRent", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(main.title = "Private renting", main.title.position = "center", bg.color = "white", frame= NA, legend.show = FALSE)
+
+peakwave2_SocialRent <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave2_SocialRent", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(main.title = "Social renting", main.title.position = "center", bg.color = "white", frame= NA, legend.show = FALSE)
+  
+peakwave2_PublicTransport <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave2_PublicTransport", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout( bg.color = "white", frame= NA, legend.show = FALSE)
+
+peakwave2_TransportOccupation <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave2_TransportOccupation", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(main.title = "Transport occupation", main.title.position = "center", bg.color = "white", frame= NA, legend.show = FALSE)
+
+peakwave2_HospitalityOccupation <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave2_HospitalityOccupation", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(main.title = "Hospitality occupation", main.title.position = "center", bg.color = "white", frame= NA, legend.show = FALSE)
+
+peakwave2_EthnicMinority <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave2_EthnicMinority", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+peakwave2_Students <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave2_Students", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+  
+peakwave2_Young <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave2_Young", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+  
+peakwave2_OlderPersons <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave2_OlderPersons", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+peakwave2_LongTermIll <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave2_LongTermIll", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+peakwave2_Obesity <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave2_Obesity", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(main.title = "Obesity", main.title.position = "center", bg.color = "white", frame= NA, legend.show = FALSE)
+
+peakwave2_IMDMostDeprived <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave2_IMDMostDeprived", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+tiff("peakwave2_coefficientest.tiff", width = 4000, height = 3000, res = 300)
+tmap_arrange(peakwave2_PopulationDensity, peakwave2_PrivateRent, peakwave2_SocialRent, peakwave2_PublicTransport, peakwave2_WorkfromHome, peakwave2_TransportOccupation, peakwave2_HospitalityOccupation, peakwave2_EthnicMinority, peakwave2_Students, peakwave2_Young, peakwave2_OlderPersons, peakwave2_LongTermIll, peakwave2_Obesity, peakwave2_IMDMostDeprived)
+dev.off()
+
+## Model specification Start Wave 1
+
+m1_startwave1 <- round(Start_Wave1, 0) ~ PopulationDensity + WorkfromHome + PrivateRent + SocialRent + PublicTransport + TransportOccupation + HospitalityOccupation + EthnicMinority + Students + Young + OlderPersons + LongTermIll + Obesity + IMDMostDeprived
+
+### OLS regression model
+
+ols_startwave1 <- lm(formula = m1_startwave1, data = LA_sf_england_var)
+summary(ols_startwave1)
+
+vif(ols_startwave1)
+
+### Quassi-poisson GWR regression model
+
+bw_quasipoissonm1startwave1 <- ggwr.sel(m1_startwave1,
+                                 data = LA_sf_england_var,
+                                 family= quasipoisson(),
+                                 coords=cbind(long, lat),
+                                 adapt = TRUE, 
+                                 longlat=TRUE,  
+                                 verbose = FALSE)
+
+nc_quasipoissonm1startwave1 <- ggwr(m1_startwave1, 
+                             data = LA_sf_england_var,
+                             family = quasipoisson(),
+                             coords = cbind(long, lat),
+                             longlat = TRUE, 
+                             adapt = bw_quasipoissonm1startwave1)
+nc_quasipoissonm1startwave1
+
+nc_quasipoissonm1startwave1_out <- as.data.frame(nc_quasipoissonm1startwave1$SDF)
+LA_sf_england_var$WR_m1startwave1 <- nc_quasipoissonm1startwave1_out$working_resids
+
+### Mapping Working Residuals
+
+legend_title = expression("Start Wave 1 (week c/ March 16th)")
+tm_shape(LA_sf_england_var) +
+  tm_fill(col = "WR_m1startwave1", title = legend_title, palette = magma(256), style = "cont") + # add fill
+  tm_scale_bar(breaks = c(0,1,2), text.size = 0.7, position =  c("center", "bottom")) +
+  tm_layout(bg.color = "white", 
+            frame= NA)
+            
+### Mapping coefficient estimates
+
+LA_sf_england_var$m1startwave1_PopulationDensity <- nc_quasipoissonm1startwave1_out$PopulationDensity
+LA_sf_england_var$m1startwave1_WorkfromHome <- nc_quasipoissonm1startwave1_out$WorkfromHome
+LA_sf_england_var$m1startwave1_PrivateRent <- nc_quasipoissonm1startwave1_out$PrivateRent
+LA_sf_england_var$m1startwave1_SocialRent <- nc_quasipoissonm1startwave1_out$SocialRent
+LA_sf_england_var$m1startwave1_PublicTransport <- nc_quasipoissonm1startwave1_out$PublicTransport
+LA_sf_england_var$m1startwave1_TransportOccupation <- nc_quasipoissonm1startwave1_out$TransportOccupation
+LA_sf_england_var$m1startwave1_HospitalityOccupation <- nc_quasipoissonm1startwave1_out$HospitalityOccupation
+LA_sf_england_var$m1startwave1_EthnicMinority <- nc_quasipoissonm1startwave1_out$EthnicMinority
+LA_sf_england_var$m1startwave1_Students <- nc_quasipoissonm1startwave1_out$Students
+LA_sf_england_var$m1startwave1_Young <- nc_quasipoissonm1startwave1_out$Young
+LA_sf_england_var$m1startwave1_OlderPersons <- nc_quasipoissonm1startwave1_out$OlderPersons
+LA_sf_england_var$m1startwave1_LongTermIll <- nc_quasipoissonm1startwave1_out$LongTermIll
+LA_sf_england_var$m1startwave1_Obesity <- nc_quasipoissonm1startwave1_out$Obesity
+LA_sf_england_var$m1startwave1_IMDMostDeprived <- nc_quasipoissonm1startwave1_out$IMDMostDeprived
+
+startwave1_PopulationDensity <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave1_PopulationDensity", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+startwave1_WorkfromHome<- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave1_WorkfromHome", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+            
+startwave1_PrivateRent <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave1_PrivateRent", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+legend_title = expression("Social renting")
+startwave1_SocialRent <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave1_SocialRent", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(main.title = "Social renting", main.title.position = "center", bg.color = "white", frame= NA, legend.show = FALSE)
+
+startwave1_PublicTransport <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave1_PublicTransport", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+startwave1_TransportOccupation <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave1_TransportOccupation", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(main.title = "Transport occupation", main.title.position = "center", bg.color = "white", frame= NA, legend.show = FALSE)
+
+legend_title = expression("Hopsitality occupation")
+startwave1_HospitalityOccupation <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave1_HospitalityOccupation", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(main.title = "Hospitality occupation", main.title.position = "center", bg.color = "white", frame= NA, legend.show = FALSE)
+
+startwave1_EthnicMinority <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave1_EthnicMinority", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+startwave1_Students <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave1_Students", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+startwave1_Young <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave1_Young", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+startwave1_OlderPersons <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave1_OlderPersons", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+startwave1_LongTermIll <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave1_LongTermIll", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+            
+startwave1_Obesity <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave1_Obesity", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(main.title = "Obesity", main.title.position = "center", bg.color = "white", frame= NA, legend.show = FALSE)
+  
+startwave1_IMDMostDeprived <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1startwave1_IMDMostDeprived", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+tiff("startwave1_coefficientest.tiff", width = 4000, height = 3000, res = 300)
+tmap_arrange(startwave1_PopulationDensity, startwave1_PrivateRent, startwave1_SocialRent, startwave1_PublicTransport, startwave1_WorkfromHome, startwave1_TransportOccupation, startwave1_HospitalityOccupation, startwave1_EthnicMinority, startwave1_Students, startwave1_Young, startwave1_OlderPersons, startwave1_LongTermIll, startwave1_Obesity, startwave1_IMDMostDeprived)
+dev.off()
+
+## Model specification Peak Wave 1
+
+m1_peakwave1 <- round(Peak_Wave1, 0) ~ PopulationDensity + WorkfromHome + PrivateRent + SocialRent + PublicTransport + TransportOccupation + HospitalityOccupation + EthnicMinority + Students + Young + OlderPersons + LongTermIll + Obesity + IMDMostDeprived
+
+### OLS regression
+
+ols_peakwave1 <- lm(formula = m1_peakwave1, data = LA_sf_england_var)
+summary(ols_peakwave1)
+
+vif(ols_peakwave1)
+
+### Quasi-poisson GWR regression
+
+bw_quasipoissonm1peakwave1 <- ggwr.sel(m1_peakwave1,
+                                 data = LA_sf_england_var,
+                                 family= quasipoisson(),
+                                 coords=cbind(long, lat),
+                                 adapt = TRUE, 
+                                 longlat=TRUE,  
+                                 verbose = FALSE)
+
+nc_quasipoissonm1peakwave1 <- ggwr(m1_peakwave1, 
+                             data = LA_sf_england_var,
+                             family = quasipoisson(),
+                             coords = cbind(long, lat),
+                             longlat = TRUE, 
+                             adapt = bw_quasipoissonm1peakwave1)
+nc_quasipoissonm1peakwave1
+
+### Mapping working residuals
+
+nc_quasipoissonm1peakwave1_out <- as.data.frame(nc_quasipoissonm1peakwave1$SDF)
+LA_sf_england_var$WR_m1peakwave1 <- nc_quasipoissonm1peakwave1_out$working_resids
+
+legend_title = expression("Peak Wave 1 (week c/ 6th April)")
+tm_shape(LA_sf_england_var) +
+  tm_fill(col = "WR_m1peakwave1", title = legend_title, palette = magma(256), style = "cont") + # add fill
+  tm_scale_bar(breaks = c(0,1,2), text.size = 0.7, position =  c("center", "bottom")) +
+  tm_layout(bg.color = "white", 
+            frame= NA)
+
+### Mapping coefficient estimates 
+
+LA_sf_england_var$m1peakwave1_PopulationDensity <- nc_quasipoissonm1peakwave1_out$PopulationDensity
+LA_sf_england_var$m1peakwave1_WorkfromHome <- nc_quasipoissonm1peakwave1_out$WorkfromHome
+LA_sf_england_var$m1peakwave1_PrivateRent <- nc_quasipoissonm1peakwave1_out$PrivateRent
+LA_sf_england_var$m1peakwave1_SocialRent <- nc_quasipoissonm1peakwave1_out$SocialRent
+LA_sf_england_var$m1peakwave1_PublicTransport <- nc_quasipoissonm1peakwave1_out$PublicTransport
+LA_sf_england_var$m1peakwave1_TransportOccupation <- nc_quasipoissonm1peakwave1_out$TransportOccupation
+LA_sf_england_var$m1peakwave1_HospitalityOccupation <- nc_quasipoissonm1peakwave1_out$HospitalityOccupation
+LA_sf_england_var$m1peakwave1_EthnicMinority <- nc_quasipoissonm1peakwave1_out$EthnicMinority
+LA_sf_england_var$m1peakwave1_Students <- nc_quasipoissonm1peakwave1_out$Students
+LA_sf_england_var$m1peakwave1_Young <- nc_quasipoissonm1peakwave1_out$Young
+LA_sf_england_var$m1peakwave1_OlderPersons <- nc_quasipoissonm1peakwave1_out$OlderPersons
+LA_sf_england_var$m1peakwave1_LongTermIll <- nc_quasipoissonm1peakwave1_out$LongTermIll
+LA_sf_england_var$m1peakwave1_Obesity <- nc_quasipoissonm1peakwave1_out$Obesity
+LA_sf_england_var$m1peakwave1_IMDMostDeprived <- nc_quasipoissonm1peakwave1_out$IMDMostDeprived
+
+peakwave1_PopulationDensity <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave1_PopulationDensity", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+peakwave1_WorkfromHome<- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave1_WorkfromHome", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+peakwave1_PrivateRent <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave1_PrivateRent", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(main.title = "Private renting", main.title.position = "center", bg.color = "white", frame= NA, legend.show = FALSE)
+
+peakwave1_SocialRent <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave1_SocialRent", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(main.title = "Social renting", main.title.position = "center", bg.color = "white", frame= NA, legend.show = FALSE)
+
+peakwave1_PublicTransport <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave1_PublicTransport", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+peakwave1_TransportOccupation <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave1_TransportOccupation", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(main.title = "Transport occupation", main.title.position = "center", bg.color = "white", frame= NA, legend.show = FALSE)
+
+peakwave1_HospitalityOccupation <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave1_HospitalityOccupation", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(main.title = "Hospitality occupation", main.title.position = "center", bg.color = "white", frame= NA, legend.show = FALSE)
+
+peakwave1_EthnicMinority <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave1_EthnicMinority", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+peakwave1_Students <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave1_Students", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+peakwave1_Young <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave1_Young", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+peakwave1_OlderPersons <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave1_OlderPersons", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+  
+peakwave1_LongTermIll <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave1_LongTermIll", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+
+peakwave1_Obesity <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave1_Obesity", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(main.title = "Obesity", main.title.position = "center", bg.color = "white", frame= NA, legend.show = FALSE)
+
+peakwave1_IMDMostDeprived <- tm_shape(LA_sf_england_var) +
+  tm_fill(col = "m1peakwave1_IMDMostDeprived", palette = pal, breaks =c(-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8)) + 
+  tm_layout(bg.color = "white", frame= NA, legend.show = FALSE)
+            
+tiff("peakwave1_coefficientest.tiff", width = 4000, height = 3000, res = 300)
+tmap_arrange(peakwave1_PopulationDensity, peakwave1_PrivateRent, peakwave1_SocialRent, peakwave1_PublicTransport, peakwave1_WorkfromHome, peakwave1_TransportOccupation, peakwave1_HospitalityOccupation, peakwave1_EthnicMinority, peakwave1_Students, peakwave1_Young, peakwave1_OlderPersons, peakwave1_LongTermIll, peakwave1_Obesity, peakwave1_IMDMostDeprived)
+dev.off()
+
+## Export final selected coefficient estimates image from all four GWL models
+
+tiff("poisson_final_final.tiff", width = 4000, height = 7000, res = 300)
+tmap_arrange(startwave1_PopulationDensity, peakwave1_PopulationDensity, startwave2_PopulationDensity, peakwave2_PopulationDensity,
+startwave1_WorkfromHome, peakwave1_WorkfromHome, startwave2_WorkfromHome, peakwave2_WorkfromHome,
+startwave1_PublicTransport, peakwave1_PublicTransport, startwave2_PublicTransport, peakwave2_PublicTransport,
+startwave1_EthnicMinority, peakwave1_EthnicMinority, startwave2_EthnicMinority, peakwave2_EthnicMinority,
+startwave1_Students, peakwave1_Students, startwave2_Students, peakwave2_Students,
+startwave1_LongTermIll, peakwave1_LongTermIll, startwave2_LongTermIll, peakwave2_LongTermIll,
+startwave1_IMDMostDeprived, peakwave1_IMDMostDeprived, startwave2_IMDMostDeprived, peakwave2_IMDMostDeprived, ncol = 4)
+dev.off()
