@@ -11,7 +11,7 @@ We explored changes over time (from March until November) amongst 151 Upper-Tier
 * [ONS Counties and Unitary Authorities (December 2019) Boundaries UK BGC](https://geoportal.statistics.gov.uk/datasets/29827d4c079349888acd7db3f84e3449_0)
 * [Public Health England indicators](https://fingertips.phe.org.uk/)
 
-These datasets are combined into two tables for the analysis: [daily covid cases]() and [contextual factors](https://github.com/fcorowe/covid19_hi/blob/main/data/context.csv)
+These datasets are combined into two tables for the analysis: [daily covid cases](https://github.com/fcorowe/covid19_hi/blob/main/data/covidcases_daily.csv) and [contextual factors](https://github.com/fcorowe/covid19_hi/blob/main/data/context.csv).
 
 ## Contextual indicators
 
