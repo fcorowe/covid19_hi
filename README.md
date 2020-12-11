@@ -12,7 +12,7 @@ The policy brief analyses the geography of the COVID-19 pandemic in England focu
   
   (2) Social - *Which socio-demographic characteristics are most strongly associated with a high prevalence of COVID-19?*
   
-  (3) Socio-spatial - *Which socio-demographic characteristics are most strongly associated with high COVID-19 cases across different parts of England?*
+  (3) Socio-spatial - *Which socio-demographic characteristics are most strongly associated with COVID-19 cases across different parts of England?*
 
 ![IMD_bump_final](https://user-images.githubusercontent.com/57355504/101911268-0e9b1d80-3bb8-11eb-82e3-e97532137b1e.jpg)
 
