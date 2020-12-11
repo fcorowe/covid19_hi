@@ -13,37 +13,37 @@ We explored changes over time (from March until November) amongst 151 Upper-Tier
 
 ## Contextual indicators
 
-Variable  descriptor   | Unit                  | Source               | Included in GWR? |
+Variable  descriptor   | Unit                  | Source               |
 :---------------------- | :--------------------- | :--------------------  | :-------------------- |
-Private renting        | % households          | [2011 Census](https://www.nomisweb.co.uk/census/2011)| Y
-Social renting         | % households          | [2011 Census](https://www.nomisweb.co.uk/census/2011)| N
-Overcrowding           | % households          | [2011 Census](https://www.nomisweb.co.uk/census/2011)| N
-Homelessness           | % persons             | [2011 Census](https://www.nomisweb.co.uk/census/2011)| N
-Public transport       | % persons aged 16-74 years | [2011 Census](https://www.nomisweb.co.uk/census/2011)| Y
-No car ownership       | % households          | [2011 Census](https://www.nomisweb.co.uk/census/2011)| N 
-Routine occupation     | % persons aged 16-74 years | [2011 Census](https://www.nomisweb.co.uk/census/2011)| N
-Work from home | % persons aged 16-74 years | [2011 Census](https://www.nomisweb.co.uk/census/2011)| Y
-Health-related occupation | % persons aged 16-74 years | [2011 Census](https://www.nomisweb.co.uk/census/2011)| N
-Transport-related occupation | % persons aged 16-74 years | [2011 Census](https://www.nomisweb.co.uk/census/2011)| Y
-Retail or hospitality related occupation | % persons aged 16-74 years | [2011 Census](https://www.nomisweb.co.uk/census/2011)| Y
-Ethnic minorities      | % of persons from ethnic minorities | [2011 Census](https://www.nomisweb.co.uk/census/2011)| Y
-Full-time students     | % households          | [2011 Census](https://www.nomisweb.co.uk/census/2011)| Y
-Young persons          | % persons             | [2011 Census](https://www.nomisweb.co.uk/census/2011)| Y
-Older persons          | % persons             | [2011 Census](https://www.nomisweb.co.uk/census/2011)| Y
-Care admissions        | Admissions per 100,000 persons aged 65+ years | [PHE](https://fingertips.phe.org.uk/)| N
-Flu vaccine            | % persons aged 65+ years| [PHE](https://fingertips.phe.org.uk/) | N
-Long-term ill health   | % persons             | [2011 Census](https://www.nomisweb.co.uk/census/2011)| Y
-Unpaid care            | % persons             | [2011 Census](https://www.nomisweb.co.uk/census/2011)| Y
-Physical inactivity    | % of adults | [PHE](https://fingertips.phe.org.uk/)| N
-Smoking                | % of adults| [PHE](https://fingertips.phe.org.uk/)| N
-Obesity                | % of adults | [PHE](https://fingertips.phe.org.uk/)| N
-Diabetes               | Estimated diagnosis rate | [PHE](https://fingertips.phe.org.uk/)| N
-Fuel poverty           | % households | [BEID 2019](https://www.gov.uk/government/collections/fuel-poverty-statistics)| N
-Life expectancy Male   | Life expectancy at birth | [PHE](https://fingertips.phe.org.uk/)| N
-Life expectancy Female | Life expectancy at birth | [PHE](https://fingertips.phe.org.uk/)| N
-Low income children    | Children in low income families under 16 years | [PHE](https://fingertips.phe.org.uk/)| N
-Multiple deprivation   | Proportion of LSOA in UTLA in 10% most deprived | [IMD 2019](https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019)| Y
-Population density | % residents per hectare | [2011 Census](https://www.nomisweb.co.uk/census/2011)| Y
+Private renting        | % households          | [2011 Census](https://www.nomisweb.co.uk/census/2011)|
+Social renting         | % households          | [2011 Census](https://www.nomisweb.co.uk/census/2011)|
+Overcrowding           | % households          | [2011 Census](https://www.nomisweb.co.uk/census/2011)|
+Homelessness           | % persons             | [2011 Census](https://www.nomisweb.co.uk/census/2011)|
+Public transport       | % persons aged 16-74 years | [2011 Census](https://www.nomisweb.co.uk/census/2011)|
+No car ownership       | % households          | [2011 Census](https://www.nomisweb.co.uk/census/2011)|
+Routine occupation     | % persons aged 16-74 years | [2011 Census](https://www.nomisweb.co.uk/census/2011)|
+Work from home | % persons aged 16-74 years | [2011 Census](https://www.nomisweb.co.uk/census/2011)|
+Health-related occupation | % persons aged 16-74 years | [2011 Census](https://www.nomisweb.co.uk/census/2011)|
+Transport-related occupation | % persons aged 16-74 years | [2011 Census](https://www.nomisweb.co.uk/census/2011)|
+Retail or hospitality related occupation | % persons aged 16-74 years | [2011 Census](https://www.nomisweb.co.uk/census/2011)|
+Ethnic minorities      | % of persons from ethnic minorities | [2011 Census](https://www.nomisweb.co.uk/census/2011)|
+Full-time students     | % households          | [2011 Census](https://www.nomisweb.co.uk/census/2011)|
+Young persons          | % persons             | [2011 Census](https://www.nomisweb.co.uk/census/2011)|
+Older persons          | % persons             | [2011 Census](https://www.nomisweb.co.uk/census/2011)
+Care admissions        | Admissions per 100,000 persons aged 65+ years | [PHE](https://fingertips.phe.org.uk/)|
+Flu vaccine            | % persons aged 65+ years| [PHE](https://fingertips.phe.org.uk/) |
+Long-term ill health   | % persons             | [2011 Census](https://www.nomisweb.co.uk/census/2011)|
+Unpaid care            | % persons             | [2011 Census](https://www.nomisweb.co.uk/census/2011)|
+Physical inactivity    | % of adults | [PHE](https://fingertips.phe.org.uk/)|
+Smoking                | % of adults| [PHE](https://fingertips.phe.org.uk/)|
+Obesity                | % of adults | [PHE](https://fingertips.phe.org.uk/)|
+Diabetes               | Estimated diagnosis rate | [PHE](https://fingertips.phe.org.uk/)|
+Fuel poverty           | % households | [BEID 2019](https://www.gov.uk/government/collections/fuel-poverty-statistics)|
+Life expectancy Male   | Life expectancy at birth | [PHE](https://fingertips.phe.org.uk/)|
+Life expectancy Female | Life expectancy at birth | [PHE](https://fingertips.phe.org.uk/)|
+Low income children    | Children in low income families under 16 years | [PHE](https://fingertips.phe.org.uk/)|
+Multiple deprivation   | Proportion of LSOA in UTLA in 10% most deprived | [IMD 2019](https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019)|
+Population density | % residents per hectare | [2011 Census](https://www.nomisweb.co.uk/census/2011)|
 
 ## Descriptive figures
 
