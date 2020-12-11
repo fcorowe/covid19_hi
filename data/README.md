@@ -14,7 +14,7 @@ We explored changes over time (from March until November) amongst 151 Upper-Tier
 ## Contextual indicators
 
 Variable  descriptor   | Unit                  | Source               |
-:---------------------- | :--------------------- | :--------------------  | :-------------------- |
+:---------------------- | :--------------------- | :--------------------  | :-------------------- 
 Private renting        | % households          | [2011 Census](https://www.nomisweb.co.uk/census/2011)|
 Social renting         | % households          | [2011 Census](https://www.nomisweb.co.uk/census/2011)|
 Overcrowding           | % households          | [2011 Census](https://www.nomisweb.co.uk/census/2011)|
