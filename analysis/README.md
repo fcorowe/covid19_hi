@@ -1,8 +1,8 @@
 # Analysis
 
-## Corrplots
+## Correlation matrix
 
-The code to generate corrplots using the [corrplot package in R](https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html) is available [here](https://github.com/fcorowe/covid19_hi/blob/main/analysis/gwr.rmd).
+We created a correlation matrix including confidence intervals to show the strength and type of relationship between COVID-19 cases and socio-demographic variables. The code to generate the plots using the [corrplot package in R](https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html) is available [here](https://github.com/fcorowe/covid19_hi/blob/main/analysis/gwr.rmd).
 
 ![corrplot_final](https://user-images.githubusercontent.com/57355504/101774269-c6abc600-3ae5-11eb-9fda-07eff5288653.jpg)
 
