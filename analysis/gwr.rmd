@@ -3,7 +3,7 @@
 
 ## Set your working directory
 
-setwd("covid19_hi")
+setwd("covid19_hi/data")
 getwd()
 
 ## Install relevant libraries
