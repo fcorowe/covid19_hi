@@ -1,54 +1,80 @@
+---
+title: "Corrplots and GWR with UTLA COVID data"
+author: "Caitlin Robinson"
+date: "11/12/2020"
+output: html_document
+---
+
+
+
 
 # Setting up the analysis 
 
 ## Set your working directory
 
+```{r}
 setwd("covid19_hi/data")
 getwd()
+```
 
 ## Install relevant libraries
 
+```{r}
 library(dplyr)
 library(tidyr)
+```
 
 # Download relevant data
 
-## Download csv. file for daily cases and create new dataframe.
+## Download csv. file for daily cases and create new dataframe
 
+```{r}
 dailycases_df <- read.csv("cases_daily.csv", check.names=FALSE)
+```
 
 ## Download other contextual data from PHE
 
+```{r}
 context_df <- read.csv("context.csv", check.names=FALSE)
+```
 
 ## Merge the two datasets
 
+```{r}
 covid <- merge(dailycases_df, context_df, by.x = "ctyua19cd", by.y = "ctyua19cd") 
+```
 
 # Sorting out variables
 
 ## Replace NA values in the dataframe
 
+```{r}
 covid <- covid %>%
   mutate_at(c(4:441), ~replace(., is.na(.), 0))
+```
 
 ## Calculate mean values for each period (Start Wave 1, Peak Wave 1, Start Wave 2, Peak Wave 2)
 
+```{r}
 covid$startwave1_mean <- rowMeans(covid[19:21], na.rm=TRUE) # select week beginning 23rd March
 covid$peakwave1_mean <- rowMeans(covid[41:47], na.rm=TRUE) # select week beginning 6th April
 covid$startwave2_mean <- rowMeans(covid[223:229], na.rm=TRUE) # select week beginning 5th October
 covid$peakwave2_mean <- rowMeans(covid[258:264], na.rm=TRUE) # select week beginning 2nd November
+```
 
 ## Recalculate COVID daily means as a proportion of the population (per 100,000 persons)
 
+```{r}
 covid <- covid %>%
   mutate(startwave1_prop = (startwave1_mean/(Residents/100000)),
   peakwave1_prop = (peakwave1_mean/(Residents/100000)),
   startwave2_prop = (startwave2_mean/(Residents/100000)),
   peakwave2_prop = (peakwave2_mean/(Residents/100000)))
+```
 
 ## Recalculate selected variables as percentages
 
+```{r}
 covid <- covid %>%
   mutate(Crowded_housing_per = (Crowded_housing/Households)*100, 
   Private_rented_per = (Private_rented/Households)*100, 
@@ -68,17 +94,21 @@ covid <- covid %>%
   
 covid <- covid %>%
   rename("IMDMostDeprived" = "IMD - Proportion of LSOAs in most deprived 10% nationally")
-  
+ ```
+ 
 ## Recalculate physical activity as physical inactivity
 
+```{r}
 covid <- covid %>%
   mutate(Physical_Activity = (100 - Physical_Activity))
 
 covid <- covid %>%
   rename("Physical_Inactivity" = "Physical_Activity")
-  
+```
+
 ## Calculate z-scores to standardise variables of interest
 
+```{r}
 covid <- covid %>%
 mutate(CrowdedHousing_zscore = (Crowded_housing_per - mean(Crowded_housing_per))/sd(Crowded_housing_per),
 PrivateRent_zscore = (Private_rented_per - mean(Private_rented_per))/sd(Private_rented_per),
@@ -109,32 +139,39 @@ IMD_zscore = (IMDMostDeprived - mean(IMDMostDeprived))/sd(IMDMostDeprived)
 )
 
 names(covid)
+```
 
 ## Select all variables of interest and create a new summary table
 
+```{r}
 Summary_table <- covid %>%
   select("ctyua19cd","ctyua19nm.x", "startwave1_prop", "peakwave1_prop", "startwave2_prop", "peakwave2_prop", "PrivateRent_zscore", "SocialRent_zscore", "CrowdedHousing_zscore", "PublicTransport_zscore", "NoCar_zscore", "RoutineOccupation_zscore", "HealthOccupation_zscore", "TransportOccupation_zscore", "HospitalityOccupation_zscore", "EthnicMinority_zscore", "Students_zscore", "Young_zscore", "OlderPersons_zscore", "LongTermIll_zscore", "UnpaidCare_zscore", "LEMale_zscore", "LEFemale_zscore", "PhysicalInactivity_zscore",  "Smoking_zscore", "Obesity_zscore", "Diabetes_zscore", "FuelPoverty_zscore", "LowIncomeChild_zscore",  "IMD_zscore", "PopulationDensity_zscore", "WorkfromHome_zscore")
-
+```
 
 ## Rename variables for clarity in new table
 
+```{r}
 Summary_table <- Summary_table %>%
   rename("LA code" = "ctyua19cd", "LA name" = "ctyua19nm.x", "Start_Wave1" = "startwave1_prop", "Peak_Wave1" = "peakwave1_prop", "Start_Wave2" = "startwave2_prop", "Peak_Wave2" = "peakwave2_prop", "PrivateRent" = "PrivateRent_zscore", "SocialRent" = "SocialRent_zscore", "CrowdedHousing" = "CrowdedHousing_zscore", "PublicTransport" = "PublicTransport_zscore", "NoCar" = "NoCar_zscore", "RoutineOccupation" = "RoutineOccupation_zscore", "HealthOccupation" = "HealthOccupation_zscore", "TransportOccupation" = "TransportOccupation_zscore", "HospitalityOccupation" = "HospitalityOccupation_zscore", "EthnicMinority" = "EthnicMinority_zscore", "Students" = "Students_zscore", "Young" = "Young_zscore", "OlderPersons" = "OlderPersons_zscore", "LongTermIll" = "LongTermIll_zscore", "UnpaidCare" = "UnpaidCare_zscore", "LEInequalityMale" = "LEMale_zscore", "LEInequalityFemale" = "LEFemale_zscore", "PhysicalInactivity" = "PhysicalInactivity_zscore",  "Smoking" = "Smoking_zscore", "Obesity" = "Obesity_zscore","Diabetes" = "Diabetes_zscore", "FuelPoverty" =  "FuelPoverty_zscore", "LowIncomeChild" = "LowIncomeChild_zscore",  "IMDMostDeprived" = "IMD_zscore", "PopulationDensity" = "PopulationDensity_zscore", "WorkfromHome" = "WorkfromHome_zscore")
   
 names(Summary_table)
+```
 
 # Creating corrplots
 
 ## Select and rename variables for corrplots
 
+```{r}
 Summary_select <- Summary_table %>%
   select("Start_Wave1", "Peak_Wave1", "Start_Wave2", "Peak_Wave2", "PopulationDensity", "PrivateRent", "SocialRent", "CrowdedHousing", "PublicTransport", "NoCar", "RoutineOccupation", "WorkfromHome", "HealthOccupation", "TransportOccupation", "HospitalityOccupation", "EthnicMinority", "Students", "Young", "OlderPersons", "LongTermIll", "UnpaidCare", "PhysicalInactivity","Smoking", "Obesity", "Diabetes", "FuelPoverty", "LEInequalityMale", "LEInequalityFemale", "LowIncomeChild", "IMDMostDeprived")
 
 Summary_select <- Summary_select %>%
   rename("Start W1" = "Start_Wave1", "Peak w1" = "Peak_Wave1", "Start W2" = "Start_Wave2", "Peak W2" = "Peak_Wave2", "Population density" = "PopulationDensity", "Private renting" = "PrivateRent", "Social renting" = "SocialRent", "Overcrowding" = "CrowdedHousing", "Public transport" = "PublicTransport", "No car ownership" = "NoCar", "Routine occupation" = "RoutineOccupation", "Work from home" = "WorkfromHome", "Health occupation" = "HealthOccupation", "Transport occupation" = "TransportOccupation", "Hospitality occupation" = "HospitalityOccupation", "Ethnic minority" = "EthnicMinority", "Full-time students" = "Students", "Young persons" = "Young", "Older persons" = "OlderPersons", "Long-term ill health" = "LongTermIll", "Unpaid care" = "UnpaidCare", "Physical inactivity" = "PhysicalInactivity", "Smoking" = "Smoking", "Obesity" = "Obesity", "Diabetes" = "Diabetes", "Fuel poverty" = "FuelPoverty", "LE inequality (male)" = "LEInequalityMale", "LE inequality (female)" = "LEInequalityFemale", "Low income children" = "LowIncomeChild", "Multiple deprivation" = "IMDMostDeprived")
+```
 
 ## Install relevant libraries
 
+```{r}
 library("devtools")
 library("corrplot")
 library(tidyverse)
@@ -143,25 +180,33 @@ library(tmap)
 library(sf)
 library(viridis)
 library(car)
+```
 
 ## Calculate signifiance
 
+```{r}
 sig1 <- corrplot::cor.mtest(Summary_select, conf.level = .95)
+```
 
 ## Calculate correlations
 
+```{r}
 c <- cor(Summary_select, method = "pearson", use = "complete.obs")
+```
 
 ## Export final correlation plot as a high resolution tiff image
 
+```{r}
 tiff("corrplot_final.tiff", width = 3000, height = 3000, res = 300)
 corrplot(c, tl.col="black", method = "square", order="original", tl.cex=0.7, p.mat=sig1$p, sig.level=.05, col= viridis::viridis(100, option = "plasma"))
 dev.off()
+```
 
 # Geographically weighted regression (GWR)
 
 ## Install relevant libraries
 
+```{r}
 library(sf)
 library(ggplot2)
 library(tidyverse)
@@ -170,32 +215,42 @@ library(tmap)
 library(sf)
 library(viridis)
 library(car)
+```
 
 ## Import the UTLA shapefile and plot it. Notice that its for the whole of the UK.
 
+```{r}
 LA_sf <- st_read("Counties_and_Unitary_Authorities__December_2019__Boundaries_UK_BFC.shp")
 LA_sf_england <- slice(LA_sf, 1:151) # Slice for England
 LA_sf_england_var <- merge(LA_sf_england, Summary_table, by.x = "ctyua19cd", by.y = "LA code")
+```
 
 ## Set colour palette for mapping GWR coefficients using RColorBrewer
 
+```{r}
 library(RColorBrewer)
 display.brewer.all(type="div") # See range of diverging palettes available
 pal <- rev(RColorBrewer::brewer.pal(11, "RdYlBu"))
+```
 
 ## Model specification for Start Wave 2
 
+```{r}
 m1_startwave2 <- round(Start_Wave2, 0) ~ PopulationDensity + WorkfromHome + PrivateRent + SocialRent + PublicTransport + TransportOccupation + HospitalityOccupation + EthnicMinority + Students + Young + OlderPersons + LongTermIll + Obesity + IMDMostDeprived
+```
 
 ### OLS regression
 
+```{r}
 ols_startwave2 <- lm(formula = m1_startwave2, data = LA_sf_england_var) # Carry out OLs regression prior to GWR
 summary(ols_startwave2)
 
 vif(ols_startwave2) # Check Variance Inflation Factor to ensure no variables are highly correlated
+```
 
 ### Quasi-poisson GWR regression
 
+```{r}
 bw_quasipoissonm1startwave2 <- ggwr.sel(m1_startwave2, # GWR bandwidth
                                  data = LA_sf_england_var,
                                  family= quasipoisson(),
@@ -214,18 +269,22 @@ nc_quasipoissonm1startwave2
 
 nc_quasipoissonm1startwave2_out <- as.data.frame(nc_quasipoissonm1startwave2$SDF) # Extract SpatialDataFrame
 LA_sf_england_var$WR_m1startwave2 <- nc_quasipoissonm1startwave2_out$working_resids # Working residuals provide a good diagnostic for model fit
+```
 
 ### Mapping gwr working residuals 
 
+```{r}
 legend_title = expression("Start Wave 2 (week c/ 5th October)") # Map working residuals
 tm_shape(LA_sf_england_var) +
   tm_fill(col = "WR_m1startwave2", title = legend_title, palette = magma(256), style = "cont") + # add fill
   tm_scale_bar(breaks = c(0,1,2), text.size = 0.7, position =  c("center", "bottom")) +
   tm_layout(bg.color = "white", 
             frame= NA)
-            
+```   
+
 ### Mapping GWR coefficient estimates
 
+```{r}
 LA_sf_england_var$m1startwave2_PopulationDensity <- nc_quasipoissonm1startwave2_out$PopulationDensity # Select variables
 LA_sf_england_var$m1startwave2_WorkfromHome <- nc_quasipoissonm1startwave2_out$WorkfromHome
 LA_sf_england_var$m1startwave2_PrivateRent <- nc_quasipoissonm1startwave2_out$PrivateRent
@@ -300,20 +359,26 @@ startwave2_IMDMostDeprived <- tm_shape(LA_sf_england_var) +
 tiff("startwave2_coefficientest.tiff", width = 4000, height = 3000, res = 300) # Export tiff of coefficient estimates for all variables 
 tmap_arrange(startwave2_PopulationDensity, startwave2_PrivateRent, startwave2_SocialRent, startwave2_PublicTransport, startwave2_WorkfromHome, startwave2_TransportOccupation, startwave2_HospitalityOccupation, startwave2_EthnicMinority, startwave2_Students, startwave2_Young, startwave2_OlderPersons, startwave2_LongTermIll, startwave2_Obesity, startwave2_IMDMostDeprived)
 dev.off()
+```
 
 ## Model specification Peak Wave 2
 
+```{r}
 m1_peakwave2 <- round(Peak_Wave2, 0) ~ PopulationDensity + WorkfromHome + PrivateRent + SocialRent + PublicTransport + TransportOccupation + HospitalityOccupation + EthnicMinority + Students + Young + OlderPersons + LongTermIll + Obesity + IMDMostDeprived
+```
 
 ### OLS regression
 
+```{r}
 ols_peakwave2 <- lm(formula = m1_peakwave2, data = LA_sf_england_var)
 summary(ols_peakwave2)
 
 vif(ols_peakwave2)
+```
 
 ### Quassi-poisson GWR
 
+```{r}
 bw_quasipoissonm1peakwave2 <- ggwr.sel(m1_peakwave2,
                                  data = LA_sf_england_var,
                                  family= quasipoisson(),
@@ -329,9 +394,11 @@ nc_quasipoissonm1peakwave2 <- ggwr(m1_peakwave2,
                              longlat = TRUE, 
                              adapt = bw_quasipoissonm1peakwave2)
 nc_quasipoissonm1peakwave2
+```
 
 ### Mapping working residuals
 
+```{r}
 nc_quasipoissonm1peakwave2_out <- as.data.frame(nc_quasipoissonm1peakwave2$SDF)
 LA_sf_england_var$WR_m1peakwave2 <- nc_quasipoissonm1peakwave2_out$working_resids
 
@@ -341,9 +408,11 @@ tm_shape(LA_sf_england_var) +
   tm_scale_bar(breaks = c(0,1,2), text.size = 0.7, position =  c("center", "bottom")) +
   tm_layout(bg.color = "white", 
             frame= NA)
+```
 
 ### Mapping coefficients estimates
 
+```{r}
 LA_sf_england_var$m1peakwave2_PopulationDensity <- nc_quasipoissonm1peakwave2_out$PopulationDensity
 LA_sf_england_var$m1peakwave2_WorkfromHome <- nc_quasipoissonm1peakwave2_out$WorkfromHome
 LA_sf_england_var$m1peakwave2_PrivateRent <- nc_quasipoissonm1peakwave2_out$PrivateRent
@@ -418,20 +487,26 @@ peakwave2_IMDMostDeprived <- tm_shape(LA_sf_england_var) +
 tiff("peakwave2_coefficientest.tiff", width = 4000, height = 3000, res = 300)
 tmap_arrange(peakwave2_PopulationDensity, peakwave2_PrivateRent, peakwave2_SocialRent, peakwave2_PublicTransport, peakwave2_WorkfromHome, peakwave2_TransportOccupation, peakwave2_HospitalityOccupation, peakwave2_EthnicMinority, peakwave2_Students, peakwave2_Young, peakwave2_OlderPersons, peakwave2_LongTermIll, peakwave2_Obesity, peakwave2_IMDMostDeprived)
 dev.off()
+```
 
 ## Model specification Start Wave 1
 
+```{r}
 m1_startwave1 <- round(Start_Wave1, 0) ~ PopulationDensity + WorkfromHome + PrivateRent + SocialRent + PublicTransport + TransportOccupation + HospitalityOccupation + EthnicMinority + Students + Young + OlderPersons + LongTermIll + Obesity + IMDMostDeprived
+```
 
 ### OLS regression model
 
+```{r}
 ols_startwave1 <- lm(formula = m1_startwave1, data = LA_sf_england_var)
 summary(ols_startwave1)
 
 vif(ols_startwave1)
+```
 
 ### Quassi-poisson GWR regression model
 
+```{r}
 bw_quasipoissonm1startwave1 <- ggwr.sel(m1_startwave1,
                                  data = LA_sf_england_var,
                                  family= quasipoisson(),
@@ -450,18 +525,22 @@ nc_quasipoissonm1startwave1
 
 nc_quasipoissonm1startwave1_out <- as.data.frame(nc_quasipoissonm1startwave1$SDF)
 LA_sf_england_var$WR_m1startwave1 <- nc_quasipoissonm1startwave1_out$working_resids
+```
 
 ### Mapping Working Residuals
 
+```{r}
 legend_title = expression("Start Wave 1 (week c/ March 16th)")
 tm_shape(LA_sf_england_var) +
   tm_fill(col = "WR_m1startwave1", title = legend_title, palette = magma(256), style = "cont") + # add fill
   tm_scale_bar(breaks = c(0,1,2), text.size = 0.7, position =  c("center", "bottom")) +
   tm_layout(bg.color = "white", 
             frame= NA)
-            
+```
+
 ### Mapping coefficient estimates
 
+```{r}
 LA_sf_england_var$m1startwave1_PopulationDensity <- nc_quasipoissonm1startwave1_out$PopulationDensity
 LA_sf_england_var$m1startwave1_WorkfromHome <- nc_quasipoissonm1startwave1_out$WorkfromHome
 LA_sf_england_var$m1startwave1_PrivateRent <- nc_quasipoissonm1startwave1_out$PrivateRent
@@ -538,20 +617,26 @@ startwave1_IMDMostDeprived <- tm_shape(LA_sf_england_var) +
 tiff("startwave1_coefficientest.tiff", width = 4000, height = 3000, res = 300)
 tmap_arrange(startwave1_PopulationDensity, startwave1_PrivateRent, startwave1_SocialRent, startwave1_PublicTransport, startwave1_WorkfromHome, startwave1_TransportOccupation, startwave1_HospitalityOccupation, startwave1_EthnicMinority, startwave1_Students, startwave1_Young, startwave1_OlderPersons, startwave1_LongTermIll, startwave1_Obesity, startwave1_IMDMostDeprived)
 dev.off()
+```
 
 ## Model specification Peak Wave 1
 
+```{r}
 m1_peakwave1 <- round(Peak_Wave1, 0) ~ PopulationDensity + WorkfromHome + PrivateRent + SocialRent + PublicTransport + TransportOccupation + HospitalityOccupation + EthnicMinority + Students + Young + OlderPersons + LongTermIll + Obesity + IMDMostDeprived
+```
 
 ### OLS regression
 
+```{r}
 ols_peakwave1 <- lm(formula = m1_peakwave1, data = LA_sf_england_var)
 summary(ols_peakwave1)
 
 vif(ols_peakwave1)
+```
 
 ### Quasi-poisson GWR regression
 
+```{r}
 bw_quasipoissonm1peakwave1 <- ggwr.sel(m1_peakwave1,
                                  data = LA_sf_england_var,
                                  family= quasipoisson(),
@@ -567,9 +652,11 @@ nc_quasipoissonm1peakwave1 <- ggwr(m1_peakwave1,
                              longlat = TRUE, 
                              adapt = bw_quasipoissonm1peakwave1)
 nc_quasipoissonm1peakwave1
+```
 
 ### Mapping working residuals
 
+```{r}
 nc_quasipoissonm1peakwave1_out <- as.data.frame(nc_quasipoissonm1peakwave1$SDF)
 LA_sf_england_var$WR_m1peakwave1 <- nc_quasipoissonm1peakwave1_out$working_resids
 
@@ -579,9 +666,11 @@ tm_shape(LA_sf_england_var) +
   tm_scale_bar(breaks = c(0,1,2), text.size = 0.7, position =  c("center", "bottom")) +
   tm_layout(bg.color = "white", 
             frame= NA)
+```
 
 ### Mapping coefficient estimates 
 
+```{r}
 LA_sf_england_var$m1peakwave1_PopulationDensity <- nc_quasipoissonm1peakwave1_out$PopulationDensity
 LA_sf_england_var$m1peakwave1_WorkfromHome <- nc_quasipoissonm1peakwave1_out$WorkfromHome
 LA_sf_england_var$m1peakwave1_PrivateRent <- nc_quasipoissonm1peakwave1_out$PrivateRent
@@ -656,9 +745,11 @@ peakwave1_IMDMostDeprived <- tm_shape(LA_sf_england_var) +
 tiff("peakwave1_coefficientest.tiff", width = 4000, height = 3000, res = 300)
 tmap_arrange(peakwave1_PopulationDensity, peakwave1_PrivateRent, peakwave1_SocialRent, peakwave1_PublicTransport, peakwave1_WorkfromHome, peakwave1_TransportOccupation, peakwave1_HospitalityOccupation, peakwave1_EthnicMinority, peakwave1_Students, peakwave1_Young, peakwave1_OlderPersons, peakwave1_LongTermIll, peakwave1_Obesity, peakwave1_IMDMostDeprived)
 dev.off()
+```
 
 ## Export final selected coefficient estimates image from all four GWL models
 
+```{r}
 tiff("poisson_final_final.tiff", width = 4000, height = 7000, res = 300)
 tmap_arrange(startwave1_PopulationDensity, peakwave1_PopulationDensity, startwave2_PopulationDensity, peakwave2_PopulationDensity,
 startwave1_WorkfromHome, peakwave1_WorkfromHome, startwave2_WorkfromHome, peakwave2_WorkfromHome,
@@ -668,3 +759,4 @@ startwave1_Students, peakwave1_Students, startwave2_Students, peakwave2_Students
 startwave1_LongTermIll, peakwave1_LongTermIll, startwave2_LongTermIll, peakwave2_LongTermIll,
 startwave1_IMDMostDeprived, peakwave1_IMDMostDeprived, startwave2_IMDMostDeprived, peakwave2_IMDMostDeprived, ncol = 4)
 dev.off()
+```
