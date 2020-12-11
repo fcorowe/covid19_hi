@@ -1,0 +1,353 @@
+---
+title: "Descriptive tables and maps for monthly average COVID cases"
+author: "Caitlin Robinson"
+date: "22/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Setting up the analysis
+
+```{r}
+setwd("covid19_hi/data")
+getwd()
+```
+
+```{r}
+library(dplyr)
+library(tidyr)
+```
+
+# Download relevant data
+
+## Download csv. files with daily cases (dailycases_df). 
+
+```{r pressure, echo=FALSE}
+dailycases_df <- read.csv("covidcases_daily.csv", check.names=FALSE)
+```
+
+# Working with daily cases
+
+## The Index of Multiple Deprivation
+
+### Select only relevant columns in dataset. In this case the beginning of each week, plus the IMD data and the number of residents.
+
+```{r}
+daily_select <- dailycases_df %>% 
+  select("ctyua19cd","ctyua19nm","02/03/2020","09/03/2020", "16/03/2020", "23/03/2020", "30/03/2020", "06/04/2020", "13/04/2020", "20/04/2020","27/04/2020", "04/05/2020", "11/05/2020", "18/05/2020", "25/05/2020", "01/06/2020", "08/06/2020", "15/06/2020", "22/06/2020", "29/06/2020", "06/07/2020", "13/07/2020", "20/07/2020", "27/07/2020", "03/08/2020", "10/08/2020", "17/08/2020", "24/08/2020", "31/08/2020", "07/09/2020", "14/09/2020", "21/09/2020","28/09/2020", "05/10/2020", "12/10/2020", "19/10/2020", "26/10/2020", "02/11/2020", "09/11/2020", "16/11/2020", "IMD - Proportion of LSOAs in most deprived 10% nationally", "Residents")
+```
+
+### Rename the IMD column to something more sensible. 
+
+```{r}
+names(daily_select)[41] <- "IMD"
+```
+
+### Create a new column of deciles according to the IMD. To calculate deciles use the ntile() function from dplyr which divides the data into N bins.
+
+```{r}
+daily_select <- mutate(daily_select, quantile_rank = ntile(daily_select$IMD,10))
+```
+
+### Group the data according to IMD classification.
+
+```{r}
+daily_summary = daily_select %>% 
+  group_by(quantile_rank)
+```
+
+### Gather the data into a long format. Gather () collapses columns into rows.
+
+```{r}
+daily_gather <- gather(daily_summary, key="Date", value="dailycases", c("02/03/2020","09/03/2020", "16/03/2020", "23/03/2020", "30/03/2020", "06/04/2020", "13/04/2020", "20/04/2020","27/04/2020", "04/05/2020", "11/05/2020", "18/05/2020", "25/05/2020", "01/06/2020", "08/06/2020", "15/06/2020", "22/06/2020", "29/06/2020", "06/07/2020", "13/07/2020", "20/07/2020", "27/07/2020", "03/08/2020", "10/08/2020", "17/08/2020", "24/08/2020", "31/08/2020", "07/09/2020", "14/09/2020", "21/09/2020","28/09/2020", "05/10/2020", "12/10/2020", "19/10/2020", "26/10/2020", "02/11/2020", "09/11/2020", "16/11/2020"))
+head(daily_gather)
+```
+
+### Make the data into a tibble format and then used gather () to calculate the proportion of of cases per 100000 persons.
+
+```{r}
+daily_gather <- as_tibble(daily_gather)
+daily_prop <- daily_gather %>%
+  mutate(dailycasesprop = dailycases/(Residents/100000))
+```
+
+### Export as csv. to used in Raw Graphs...
+
+```{r}
+write.csv(daily_prop, "dailycases_IMD_prop_new.csv")
+```
+
+## Multiple variables
+
+### Select only relevant columns in dataset.
+
+```{r}
+multiple_select <- dailycases_df %>% 
+  select("ctyua19cd","ctyua19nm","02/03/2020","09/03/2020", "16/03/2020", "23/03/2020", "30/03/2020", "06/04/2020", "13/04/2020", "20/04/2020","27/04/2020", "04/05/2020", "11/05/2020", "18/05/2020", "25/05/2020", "01/06/2020", "08/06/2020", "15/06/2020", "22/06/2020", "29/06/2020", "06/07/2020", "13/07/2020", "20/07/2020", "27/07/2020", "03/08/2020", "10/08/2020", "17/08/2020", "24/08/2020", "31/08/2020", "07/09/2020", "14/09/2020", "21/09/2020","28/09/2020", "05/10/2020", "12/10/2020", , "19/10/2020", "26/10/2020", "02/11/2020", "09/11/2020", "16/11/2020", "Residents", "Households", "Crowded_housing", "Private_rented", "Age_0_to_19","Age_0_to_19", "Age_65_to_84", "Age_85plus", "Black",  "All_fulltime_students", "Social_rented", "Private_rented", "Long_term_ill", "Provides_unpaid_care")
+```
+
+### Calculate a new percentage of crowded housing column.
+
+```{r}
+multiple_select <- as_tibble(multiple_select)
+multiple_select <- multiple_select %>%
+  mutate(Crowded_housing_per = (Crowded_housing/Households)*100, Private_rented_per = (Private_rented/Households)*100, Young_per = (Age_0_to_19/Residents)*100,
+         Older_per=((Age_65_to_84+Age_85plus)/Residents)*100, Black_per=(Black/Residents)*100, Students_per = (All_fulltime_students/Households)*100, Socialrent_per = (Social_rented/Households)*100, Longtermill_per = (Long_term_ill/Residents)*100, Unpaidcare_per = (Provides_unpaid_care/Residents)*100)
+```
+
+### Create a new column of deciles for each variable. To calculate deciles use the ntile() function from dplyr which divides the data into N bins.
+
+```{r}
+multiple_select <- mutate(multiple_select, crowding_decile = ntile(multiple_select$Crowded_housing_per,10), 
+                          privaterent_decile = ntile(multiple_select$Private_rented_per,10), 
+                          young_decile = ntile(multiple_select$Young_per, 10), 
+                          older_decile = ntile(multiple_select$Older_per, 10), 
+                          black_decile =ntile(multiple_select$Black_per, 10),  
+                          student_decile=ntile(multiple_select$Students_per, 10), 
+                          socialrent_decile = ntile(multiple_select$Socialrent_per, 10), 
+                          ill_decile = ntile(multiple_select$Longtermill_per, 10), 
+                          care_decile = ntile(multiple_select$Unpaidcare_per, 10))
+```
+### Gather the data into a long format. Gather () collapses columns into rows http://www.sthda.com/english/wiki/tidyr-crucial-step-reshaping-data-with-r-for-easier-analyses
+
+```{r}
+privaterent_gather <- gather(privaterent_summary, key="Date", value="dailycases", c("02/03/2020","09/03/2020", "16/03/2020", "23/03/2020", "30/03/2020", "06/04/2020", "13/04/2020", "20/04/2020","27/04/2020", "04/05/2020", "11/05/2020", "18/05/2020", "25/05/2020", "01/06/2020", "08/06/2020", "15/06/2020", "22/06/2020", "29/06/2020", "06/07/2020", "13/07/2020", "20/07/2020", "27/07/2020", "03/08/2020", "10/08/2020", "17/08/2020", "24/08/2020", "31/08/2020", "07/09/2020", "14/09/2020", "21/09/2020","28/09/2020", "05/10/2020", "12/10/2020", "19/10/2020", "26/10/2020", "02/11/2020", "09/11/2020", "16/11/2020"))
+```
+
+### Make the data into a tibble format and then used gather () to calculate the proportion of of cases per 100000 persons.
+
+```{r}
+privaterent_gather <- as_tibble(privaterent_gather)
+privaterent_prop <- privaterent_gather %>%
+  mutate(dailycasesprop = dailycases/(Residents/100000))
+```
+
+### Export as csv. to used in Raw Graphs...
+
+```{r}
+write.csv(privaterent_prop, "dailycases_privaterent_prop.csv")
+```
+
+# Creating a summary table of COVID cases by LA
+
+## Replace all NA values in date columns with 0.
+
+```{r}
+dailycases_df <- dailycases_df %>%
+  mutate_at(c(4:270), ~replace(., is.na(.), 0))
+```
+
+## Calculate mean values for each month. Removed february data as its pretty much all zero values!
+
+```{r}
+dailycases_df <- dailycases_df %>%
+  mutate(March_mean = rowMeans(select(dailycases_df, ends_with("03/2020"))))
+dailycases_df <- dailycases_df %>%
+  mutate(April_mean = rowMeans(select(dailycases_df, ends_with("04/2020"))))
+dailycases_df <- dailycases_df %>%
+  mutate(May_mean = rowMeans(select(dailycases_df, ends_with("05/2020"))))
+dailycases_df <- dailycases_df %>%
+  mutate(June_mean = rowMeans(select(dailycases_df, ends_with("06/2020"))))
+dailycases_df <- dailycases_df %>%
+  mutate(July_mean = rowMeans(select(dailycases_df, ends_with("07/2020"))))
+dailycases_df <- dailycases_df %>%
+  mutate(August_mean = rowMeans(select(dailycases_df, ends_with("08/2020"))))
+dailycases_df <- dailycases_df %>%
+  mutate(September_mean = rowMeans(select(dailycases_df, ends_with("09/2020"))))
+dailycases_df <- dailycases_df %>%
+  mutate(October_mean = rowMeans(select(dailycases_df, ends_with("10/2020"))))
+dailycases_df <- dailycases_df %>%
+  mutate(November_mean = rowMeans(select(dailycases_df, ends_with("11/2020"))))
+```
+
+## Recalculate means as a proportion
+
+```{r}
+dailycases_df <- dailycases_df %>%
+  mutate(March_prop = March_mean/(Residents/100000), April_prop = (April_mean/(Residents/100000)), May_prop = (May_mean/(Residents/100000)), June_prop = (June_mean/(Residents/100000)), July_prop = (July_mean/(Residents/100000)), August_prop = (August_mean/(Residents/100000)), September_prop = (September_mean/(Residents/100000)), October_prop = (October_mean/(Residents/100000)), November_prop = (November_mean/(Residents/100000)))
+```
+
+## Create the new summary table with only monthly averages. Reorder table by LA names, and rename column names.
+
+```{r}
+Summary_table <- dailycases_df %>%
+  select("ctyua19cd","ctyua19nm", "March_prop", "April_prop", "May_prop", "June_prop", "July_prop", "August_prop", "September_prop", "October_prop", November_prop)
+
+Summary_table <- Summary_table[order(Summary_table$ctyua19nm),]
+
+Summary_table <- Summary_table %>%
+rename("LA code" = "ctyua19cd", "LA name" = "ctyua19nm", "March" = "March_prop", "April" = "April_prop", "May" = "May_prop", "June" = "June_prop", "July" = "July_prop", "August" = "August_prop", "September" = "September_prop", "October" = "October_prop", "November" = "November_prop")
+```
+
+## Round numeric values to 1 dp.
+
+```{r}
+Summary_table <- Summary_table %>%
+  mutate_if(is.numeric, ~round(., 1))
+```
+
+## Install table libraries
+
+```{r}
+library(data.table)
+library(formattable)
+```
+
+## Put table into formattable format. Realign columns - either left, right or central. Pick colours...
+
+```{r}
+formattable(Summary_table, align =c("l","l","c","c","c", "c", "c", "c", "c", "c"),
+            list(March = color_tile("white","red"), 
+                 April = color_tile("white","red"), 
+                 May = color_tile("white","red"), 
+                 June = color_tile("white","red"), 
+                 July = color_tile("white","red"),
+                 August = color_tile("white","red"), 
+                 September = color_tile("white","red"), 
+                 October = color_tile("white","red"),
+                 November = color_tile("white","red")))
+
+formattable(Summary_table, align =c("l","l","c","c", "c", "c", "c", "c", "c", "c", "c"),
+            list(area(col = 3:11) ~ color_tile("white", "red")))
+```
+
+# Mapping COVID cases relative to the rest of the country (deciles)
+
+```{r}
+library(sf)
+library(ggplot2)
+```
+
+## Import the LA shapefile and plot it. Notice that its for the whole of the UK.
+
+```{r}
+LA_sf <- st_read("Counties_and_Unitary_Authorities__December_2019__Boundaries_UK_BFC.shp")
+str(LA_sf) # See information about the data structure
+plot(st_geometry(LA_sf)) # Plot only the boundaries
+```
+
+## Extract only LA from England (first 151 rows, or alternatively select LA beginning with letter E)
+
+```{r}
+LA_sf_england <- slice(LA_sf, 1:151)
+LA_sf_england
+plot(st_geometry(LA_sf_england))
+```
+
+## Join with summary table.
+
+```{r}
+LA_covidmonthly <- merge(LA_sf_england, Summary_table, by.x = "ctyua19cd", by.y = "LA code")
+names(LA_covidmonthly) 
+```
+
+## Plot simple featues (sf) with plot () to check the data.
+
+```{r}
+plot(LA_covidmonthly[12:20],
+     breaks="quantile")
+```
+
+## Select a colour palette. Having chosen a color brewer palette, this can be reversed.
+
+```{r}
+library(RColorBrewer)
+pal <- rev(brewer.pal(10, ("RdYlBu"))) # select 10 colors from the palette
+class(pal)
+```
+
+## Use the plot() function for simple map.
+
+```{r}
+plot(LA_covidmonthly[12:20],
+     breaks="quantile", 
+     nbreaks = 10,
+     pal = pal)
+```
+
+## Use tmap for more complex mapping...
+https://spatialanalysis.github.io/lab_tutorials/4_R_Mapping.html 
+http://zevross.com/blog/2018/10/02/creating-beautiful-demographic-maps-in-r-with-the-tidycensus-and-tmap-packages
+
+```{r}
+library(tmap)
+
+tm_shape(LA_covidmonthly) + 
+  tm_borders(col = 'grey', lwd = .2) + 
+  tm_fill(col = c("March", "April", "May", "June", "July", "August", "September", "October", "November"), title = "Daily COVID cases", labels = c("10% least cases", " ", " ", " ", " ", " ", " ", " ", " ", "10% most cases"), n=10, style="quantile", palette = pal) +
+  tm_layout(frame= FALSE, legend.outside = TRUE, legend.outside.position="right")
+```
+
+```{r}
+March <- tm_shape(LA_covidmonthly) + 
+  tm_borders(col = 'grey', lwd = .2) + 
+  tm_fill("March", n=10, style="quantile", palette = pal) +
+  tm_layout(frame= FALSE)
+```
+
+```{r}
+April <- tm_shape(LA_covidmonthly) + 
+  tm_borders(col = 'grey', lwd = .2) + 
+  tm_fill("April", n=10, style="quantile", palette = pal) +
+  tm_layout(frame= FALSE) 
+```
+
+```{r}
+May <- tm_shape(LA_covidmonthly) + 
+  tm_borders(col = 'grey', lwd = .2) + 
+  tm_fill("May", n=10, style="quantile", palette = pal) +
+  tm_layout(frame= FALSE) 
+```
+
+```{r}
+June <- tm_shape(LA_covidmonthly) + 
+  tm_borders(col = 'grey', lwd = .2) + 
+  tm_fill("June", n=10, style="quantile", palette = pal) +
+  tm_layout(frame= FALSE) 
+```
+
+```{r}
+July <- tm_shape(LA_covidmonthly) + 
+  tm_borders(col = 'grey', lwd = .2) + 
+  tm_fill("July", n=10, style="quantile", palette = pal) +
+  tm_layout(frame= FALSE) 
+```
+
+```{r}
+August <- tm_shape(LA_covidmonthly) + 
+  tm_borders(col = 'grey', lwd = .2) + 
+  tm_fill("August", n=10, style="quantile", palette = pal) +
+  tm_layout(frame= FALSE) 
+```
+
+```{r}
+September <- tm_shape(LA_covidmonthly) + 
+  tm_borders(col = 'grey', lwd = .2) + 
+  tm_fill("September", n=10, style="quantile", palette = pal) +
+  tm_layout(frame= FALSE) 
+```
+
+```{r}
+October <- tm_shape(LA_covidmonthly) + 
+  tm_borders(col = 'grey', lwd = .2) + 
+  tm_fill("October", n=10, style="quantile", palette = pal) +
+  tm_layout(frame= FALSE)
+```
+
+```{r}
+November <- tm_shape(LA_covidmonthly) + 
+  tm_borders(col = 'grey', lwd = .2) + 
+  tm_fill("November", n=10, style="quantile", palette = pal) +
+  tm_layout(frame= FALSE)
+```
+
+## Export as high resolution tiff
+
+```{r}
+tiff("Relative_maps_new.tiff", width = 3000, height = 3000, res = 300)
+tmap_arrange(March, April, May, June, July, August, September, October, November, ncol=3)
+dev.off()
+```
