@@ -376,6 +376,8 @@ vif(ols_peakwave2)
 ### Quassi-poisson GWR
 
 ```{r}
+attach(LA_sf_england_var)
+
 bw_quasipoissonm1peakwave2 <- ggwr.sel(m1_peakwave2,
                                  data = LA_sf_england_var,
                                  family= quasipoisson(),
