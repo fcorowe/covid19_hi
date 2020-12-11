@@ -26,5 +26,3 @@ Unpaid care            | % persons             | [2011 Census](https://www.nomis
 Multiple deprivation   | Proportion of LSOA in UTLA in 10% most deprived | [IMD 2019](https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019)| Y
 Population density | % residents per hectare | [2011 Census](https://www.nomisweb.co.uk/census/2011)| Y
 
-![poisson_finalselection](https://user-images.githubusercontent.com/57355504/101781331-8ea98080-3aef-11eb-916f-88ec15bb9743.jpg)
-
