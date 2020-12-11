@@ -1,0 +1,365 @@
+---
+title: "Creating a COVID-19 Dataset for England"
+author: "F Rowe"
+date: "13/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Notes
+
+Few points:
+
+- Note that probably some of the Census variables may not include counts (i.e. mean or median age). The way the data are structured is to sum all the Output Area counts that belong to a same UTLA. If interested in particular columns that do not include counts, changes to the code may be required, so to treat them separately.
+
+- Also the names of the Census variables in the final shapefiles have been shortened. It is easy understand what they report, but if we want to change them, that has to be done manually.
+
+- In the IMD dataset Cornwall and Isles of Scilly are reported separately. Given that the majority (if not all) COVID-19 cases will be in Cornwall (although they are reported combined), the IMD characteristics of Cornwall are combined (not and average of the two). In this way I believe it will be more representative and close to reality (i.e. the population of Isles of Scilly is about 2,000 people and that of Cornwall more than 500,000).
+
+
+The code below reads daily COVID-19 cases at the UTLA level and append IMD 2019 scores and relevant Census 2011 variables. The output is a geospatial dataset.
+
+### This part of the notebook reports the cumulative cases of covid-19 in England
+
+In this version of the notebook we will be using the PHE API to download data at UTLA level
+
+```{r}
+rm(list=ls())
+library(ukcovid19)
+library(reshape2)
+library(readr)
+library(ggplot2)
+library(httr)
+library(RColorBrewer)
+library(tidyverse)
+library(stringr)
+library(sf)
+library(readxl)
+#' Extracts paginated data by requesting all of the pages
+#' and combining the results.
+#'
+#' @param filters    API filters. See the API documentations for 
+#'                   additional information.
+#'                   
+#' @param structure  Structure parameter. See the API documentations 
+#'                   for additional information.
+#'                   
+#' @return list      Comprehensive list of dictionaries containing all 
+#'                   the data for the given ``filter`` and ``structure`.`
+get_paginated_data <- function (filters, structure) {
+  
+    endpoint     <- "https://api.coronavirus.data.gov.uk/v1/data"
+    results      <- list()
+    current_page <- 1
+    
+    repeat {
+        httr::GET(
+            url   = endpoint,
+            query = list(
+                filters   = paste(filters, collapse = ";"),
+                structure = jsonlite::toJSON(structure, auto_unbox = TRUE),
+                page      = current_page
+            ),
+            timeout(10)
+        ) -> response
+        
+        # Handle errors:
+        if ( response$status_code >= 400 ) {
+            err_msg = httr::http_status(response)
+            stop(err_msg)
+        } else if ( response$status_code == 204 ) {
+            break
+        }
+        
+        # Convert response from binary to JSON:
+        json_text <- content(response, "text")
+        dt        <- jsonlite::fromJSON(json_text)
+        results   <- rbind(results, dt$data)
+        
+        if ( is.null( dt$pagination$`next` ) ){
+            break
+        }
+        
+        current_page <- current_page + 1;
+    }
+    
+    return(results)
+    
+}
+# Create filters:
+query_filters <- c(
+  # Code to get data on every Local Authority
+    "areaType=utla"
+  # Code to call cases from a specific Local Authority
+    #paste0("areaType = ltla ; areaName = ", Local_Authority)
+)
+# Create the structure as a list or a list of lists:
+query_structure <- list(
+    date       = "date", 
+    name       = "areaName", 
+    code       = "areaCode", 
+    cases      = "newCasesBySpecimenDate",
+    cumcases   = "cumCasesBySpecimenDate"
+   # deaths     = "newDeaths28DaysByDeathDate"
+#    tests      = "newPillarOneTestsByPublishDate"
+)
+covid_19_cases <- get_paginated_data(query_filters, query_structure)
+covid_19_cases
+```
+
+
+
+
+```{r}
+# Make sure that number of cases is numeric
+covid_19_cases$cases <- as.numeric(covid_19_cases$cases)
+covid_19_cases$cumcases <- as.numeric(covid_19_cases$cumcases)
+# convert Date from factor
+covid_19_cases$date <- as.Date(as.character(covid_19_cases$date))
+# subset only rows of the data frame that code starts with E-which is England
+Eng_covid_19_cases <- covid_19_cases %>%
+  filter(str_detect(code, "E"))
+```
+
+We will create two separate files with covid-19 data:
+- one with the cumulative total cases by UTLA (i.e. Eng_case_tot_case_wide);
+- one with the daily confirmed cases by UTLA (i.e. Eng_case_day_case_wide). 
+
+
+```{r}
+# reshape from long to wide format
+Eng_case_tot_case_wide <- dcast(covid_19_cases, name + code ~ date, value.var="cumcases")
+Eng_case_day_case_wide <- dcast(covid_19_cases, name + code ~ date, value.var="cases")
+```
+
+
+
+### This part of the notebook is related to the geospatial data manipulation
+```{r}
+# read in the UTLA boundaries for the UK
+UTLA <- st_read("./Counties_and_Unitary_Authorities_December_2019_Boundaries_UK_BGC/Counties_and_Unitary_Authorities_December_2019_Boundaries_UK_BGC.shp")
+```
+
+```{r}
+# subset only rows of the shapefile that code starts with E-which is England
+Eng_shp <- UTLA %>%
+  filter(str_detect(ctyua19cd, "E"))
+```
+
+
+```{r}
+# rename Cornwall to Cornwall and Isles of Scilly
+Eng_shp <- Eng_shp %>% 
+  mutate(ctyua19nm = str_replace(ctyua19nm, "Cornwall", "Cornwall and Isles of Scilly"))
+```
+
+
+
+### This part of the notebook is related to the IMD data by UTLA in England
+```{r}
+# read in the IMD file for UTLAs
+IMD <- read_excel("./imd_2019/File_11_-_IoD2019_Local_Authority_District_Summaries__upper-tier__.xlsx", sheet = "IMD")
+```
+
+In the IMD dataset Cornwall and Isles of Scilly are reported separately. Given that the majority (if not all) the covid-19 cases will be in Cornwall (although they are reported combined) I will combine the IMD characteristics of Cornwall and not and average of the two. In this way I believe it will be more representative and close to reality (i.e. the population of Isles of Scilly is about 2,000 people and that of Cornwall more than 500,000).
+
+```{r}
+# rename Cornwall
+IMD$`Upper Tier Local Authority District name (2019)`[IMD$`Upper Tier Local Authority District name (2019)` == "Cornwall"] <- "Cornwall and Isles of Scilly"
+```
+
+
+
+### In this section we want to incorporate some Census 2011 variables. The data represent counts by Output Area. Here we only use the Output Areas in England. In this section we also incorporate some additional information derived from Census 2011 regarding industry and occupation by ethnic group.
+
+```{r}
+# read in the Census 2011 file for Output Areas that
+OA_census <- read.csv("UK Ouput Area counts dataset_w_UTLA19.csv")
+# subset only the OAs in England
+OA_census_Eng <- subset(OA_census, Country == "England")
+```
+
+
+```{r}
+# read in the Census 2011 file for Output Areas with occupation by ethnic group
+OA_occupation <- read.csv("occupation_by_eth_gr.csv", check.names = FALSE)
+# read in the Census 2011 file for Output Areas with industry by ethnic group
+OA_industry <- read.csv("industry_by_eth_gr.csv", check.names = FALSE)
+```
+
+
+```{r}
+# make sure that the columns we want to use as index are characters
+OA_census_Eng$Output_Area <- as.character(OA_census_Eng$Output_Area)
+OA_occupation$GeographyCode <- as.character(OA_occupation$GeographyCode)
+OA_industry$GeographyCode <- as.character(OA_industry$GeographyCode)
+# append the occupation data to the rest of census variables
+OA_census_Eng <- inner_join(OA_census_Eng, OA_occupation, by = c("Output_Area" = "GeographyCode"))
+# finally append the industry dats to the rest of census variables
+OA_census_Eng <- inner_join(OA_census_Eng, OA_industry, by = c("Output_Area" = "GeographyCode"))
+```
+
+To aggregate OAs into UTLA, the following steps are needed:
+
+1. firstly found the correspondence between District name provided in the Census file and the LTLA19NM. Based on LTLA19NM, UTLA19NM data were appended;
+
+2. In some cases, some NA values in the UTLA19-column E appeared;
+
+3. In an extra parameter was added to column F to look at the county name to match the data;
+
+4. Bournemouth, Poole and Christchurch are under Dorset in the original lookup table. However, in the covid-19 dataset are reported combined. So I have added their name as Bournemouth, Christchurch and Poole manually on UTLA19NM column;
+
+5. I have done the same for Cornwall and Isles of Scilly which are combined as one UTLA. 
+
+A complete lookup table have been created with the name "Lookup_tables_covid_data.xlsx".
+
+Now that we have the Census counts for all Output Areas in England, we can aggregate the counts for each variable by UTLA.
+
+```{r}
+# make sure that UTLA19NM is a character vector
+OA_census_Eng$UTLA19NM <- as.character(OA_census_Eng$UTLA19NM)
+# we also do not need some of the columns so we keep only the UTLA name and the Census variables
+OA_census_Eng_clean <- subset(OA_census_Eng, select = -c(X, Output_Area, Country, Region, County, District, Ward, Latitude, Longitude, Hectares))
+# sum all the rows (i.e. OAs) that belong to the same UTLA
+# note that probably some of the variables may not inlcude counts (i.e. mean or median age)-
+# if we are interested in any f them we may need to treat them separately
+UTLA_census_Eng <- OA_census_Eng_clean %>% group_by(UTLA19NM) %>% summarise_all(~sum(.))
+# also works
+#UTLA_census_Eng <- OA_census_Eng_clean %>% group_by(UTLA19NM) %>% summarise_all(funs(sum))
+# transform all variables to numeric except the first which is a name
+UTLA_census_Eng[-1] <- lapply(UTLA_census_Eng[-1], as.numeric)
+```
+
+### This part reads the COVID related deaths by MSOA
+To do this, I have to find correspondence between MSOAs and UTLAs. So the steps are:
+
+* extract the OA to UTLA correspondence from Census table;
+* attach the corresponding MSOA code to this lookup table;
+* attach the UTLA code to the COVID deaths file; and
+* finally aggregate MSOA-level COVID deaths by UTLA
+
+```{r}
+# read in the lookup table between OA, MSOA etc. 
+OA_MSOA_lookup <- read.csv("Output_Area_to_LSOA_to_MSOA_to_Local_Authority_District__December_2017__Lookup_with_Area_Classifications_in_Great_Britain.csv", check.names = FALSE)
+# rename first column as it appears to have an issue
+OA_MSOA_lookup <- OA_MSOA_lookup %>% rename_at(1,~"OA11CD")
+head(OA_MSOA_lookup)
+```
+
+```{r}
+# create a table with OA, MSOA and UTLA correspondence
+OA_to_MSOA <- left_join(OA_census_Eng[,c("Output_Area", "UTLA19NM")], 
+                         OA_MSOA_lookup[,c("OA11CD", "MSOA11CD")], 
+                        by = c("Output_Area" = "OA11CD"))
+# keep only the unique MSOA rows
+# duplicates are merged based on OAs
+MSOA_to_UTLA <- distinct(OA_to_MSOA, MSOA11CD, .keep_all = TRUE)
+MSOA_to_UTLA <- MSOA_to_UTLA[, c("MSOA11CD", "UTLA19NM")]
+```
+
+```{r}
+# read COVID related deaths by MSOA
+# due to the formatting of the excel file I have to skip the first 11 rows
+MSOA_deaths <- read_excel("referencetablesdraft.xlsx", sheet = "Table 5", skip = 11)
+# then keep only the columns needed
+MSOA_deaths <- MSOA_deaths[, c("MSOA code", "COVID-19")]
+# rename the code column
+colnames(MSOA_deaths)[1] <- "MSOA_code"
+# subset only rowsthat code starts with E-which is England
+MSOA_deaths_eng <- MSOA_deaths %>%
+  filter(str_detect(MSOA_code, "E"))
+#  attach the corresponding UTLA
+MSOA_w_UTLA <- left_join(MSOA_deaths_eng, MSOA_to_UTLA, by = c("MSOA_code" = "MSOA11CD"))
+# finally aggregate the covid related deaths by UTLA
+UTLA_deaths_Eng <- MSOA_w_UTLA %>% 
+  group_by(UTLA19NM) %>% 
+  summarise(covid_deaths = sum(`COVID-19`)) 
+```
+
+
+
+### Final part combines all the separate dataframes and geospatial data
+
+#### One with the total cases 
+First we combine the covid cases and IMD data
+
+```{r}
+# make sure that  the area name is character so we can combine the covid cases with IMD scores
+Eng_case_tot_case_wide$name <- as.character(Eng_case_tot_case_wide$name)
+Eng_case_tot_case_wide_w_IMD <- merge(x = Eng_case_tot_case_wide , y = IMD, by.x = "name",by.y = "Upper Tier Local Authority District name (2019)", all.x = TRUE)
+```
+
+append the Census variables
+
+```{r}
+Eng_case_tot_case_wide_w_IMD_Census <- merge(x = Eng_case_tot_case_wide_w_IMD , y = UTLA_census_Eng, by.x = "name",by.y = "UTLA19NM", all.x = TRUE)
+```
+
+append total number of deaths by UTLA
+
+```{r}
+Eng_case_tot_case_wide_w_IMD_Census_Deaths <- merge(x = Eng_case_tot_case_wide_w_IMD_Census , y = UTLA_deaths_Eng, by.x = "name",by.y = "UTLA19NM", all.x = TRUE)
+```
+
+We then combine the previous file with the UTLA polygons so we can plot the data
+
+
+```{r}
+# this is using dplyr
+# I found it better as it maintains the column names
+Covid19_total_cases_geo <- inner_join(Eng_shp, Eng_case_tot_case_wide_w_IMD_Census, by = c("ctyua19nm" = "name"))
+```
+
+
+Finally we can save the dataset as a shapefile using sf library
+```{r, warning=FALSE}
+st_write(Covid19_total_cases_geo, "output/Covid19_total_cases_geo.shp")
+st_write(Covid19_total_cases_geo, "output/total.csv")
+```
+
+#### And one with the daily cases 
+First we combine the covid cases and IMD data
+
+```{r}
+# make sure that  the area name is character so we can combine the covid cases with IMD scores
+Eng_case_day_case_wide$name <- as.character(Eng_case_day_case_wide$name)
+Eng_case_day_case_wide_w_IMD <- merge(x = Eng_case_day_case_wide , y = IMD, by.x = "name",by.y = "Upper Tier Local Authority District name (2019)", all.x = TRUE)
+```
+
+Then we append the Census variables
+
+```{r}
+Eng_case_day_case_wide_w_IMD_Census <- merge(x = Eng_case_day_case_wide_w_IMD , y = UTLA_census_Eng, by.x = "name",by.y = "UTLA19NM", all.x = TRUE)
+```
+
+
+We then combine the previous file with the UTLA polygons so we can plot the data
+
+
+```{r}
+# this is using dplyr
+# I found it better as it maintains the column names
+Covid19_daily_cases_geo <- inner_join(Eng_shp, Eng_case_day_case_wide_w_IMD_Census, by = c("ctyua19nm" = "name"))
+```
+
+
+Finally we can save the dataset as a shapefile using sf library
+```{r, warning=FALSE}
+st_write(Covid19_daily_cases_geo, "Covid19_daily_cases_geo.shp")
+st_write(Covid19_daily_cases_geo, "daily.csv")
+```
+
+### Add Apple mobility trends
+The data downloaded on 23/4/2020 from https://www.apple.com/covid19/mobility
+```{r}
+apple_mobility <- read.csv("applemobilitytrends-2020-04-21.csv", check.names = FALSE)
+```
+
+```{r}
+# select the areas we are interested
+apple_mobility_UK <- subset(apple_mobility, region %in% c("UK", "London", "Manchester",
+                                                          "Leeds", "Birmingham - UK"))
+```
