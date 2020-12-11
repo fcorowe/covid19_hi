@@ -12,4 +12,5 @@ In this policy brief, we aim to measure the relationship between a range of area
   
   (3) Socio-spatial - *Which socio-demographic characteristics are most strongly associated with high COVID-19 cases across different parts of England?*
 
+![IMD_bump_final](https://user-images.githubusercontent.com/57355504/101911268-0e9b1d80-3bb8-11eb-82e3-e97532137b1e.jpg)
 
