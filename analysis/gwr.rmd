@@ -5,9 +5,6 @@ date: "11/12/2020"
 output: html_document
 ---
 
-
-
-
 # Setting up the analysis 
 
 ## Set your working directory
