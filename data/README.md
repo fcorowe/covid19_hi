@@ -47,7 +47,7 @@ Population density | % residents per hectare | [2011 Census](https://www.nomiswe
 
 ## Descriptive figures
 
-A range of descriptive maps, figures and tables were created prior to the GWR analysis. Access the code here. 
+A range of descriptive maps, figures and tables were created prior to the GWR analysis. Access the code [here](https://github.com/fcorowe/covid19_hi/blob/main/data/descriptive_maps_tables.Rmd). 
 
 ![Relative_maps_new](https://user-images.githubusercontent.com/57355504/101910584-09899e80-3bb7-11eb-85ff-1577393c3a6b.jpg)
 
