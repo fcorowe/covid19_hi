@@ -26,7 +26,7 @@ library(tidyr)
 ## Download csv. file for daily cases and create new dataframe
 
 ```{r}
-dailycases_df <- read.csv("cases_daily.csv", check.names=FALSE)
+dailycases_df <- read.csv("covidcases_daily.csv", check.names=FALSE)
 ```
 
 ## Download other contextual data from PHE
