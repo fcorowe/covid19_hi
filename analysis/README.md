@@ -2,13 +2,13 @@
 
 ## Corrplots
 
-The code to generate corrplots is available [here](https://github.com/fcorowe/covid19_hi/blob/main/analysis/gwr.rmd).
+The code to generate corrplots using the [corrplot package in R](https://cran.r-project.org/web/packages/corrplot/vignettes/corrplot-intro.html) is available [here](https://github.com/fcorowe/covid19_hi/blob/main/analysis/gwr.rmd).
 
 ![corrplot_final](https://user-images.githubusercontent.com/57355504/101774269-c6abc600-3ae5-11eb-9fda-07eff5288653.jpg)
 
 ## Geographically Weighted Regression
 
-We measured the strength of the relationship between new COVID cases and a set of area-level socio-demographic factors. To this end, we used a using [Geographically Weighted Regression (GWR)](https://rss.onlinelibrary.wiley.com/doi/abs/10.1111/1467-9884.00145) model using the [spgwr package in R](using [Geographically Weighted Regression](https://rss.onlinelibrary.wiley.com/doi/abs/10.1111/1467-9884.00145). GWR allows for the identification of areas reporting a relatively high number of cases, in relation to the average UTLA in England at a given point in time. You can find the full code for the quassi-poisson GWR analysis [here](https://github.com/fcorowe/covid19_hi/blob/main/analysis/gwr.rmd). ThE code was adapted and exlained further in the [Spatial Analysis course materials](https://gdsl-ul.github.io/san/geographically-weighted-regression.html). 
+We measured the strength of the relationship between new COVID cases and a set of area-level socio-demographic factors. To this end, we used a using [Geographically Weighted Regression (GWR)](https://rss.onlinelibrary.wiley.com/doi/abs/10.1111/1467-9884.00145) model using the [spgwr package in R](https://cran.r-project.org/web/packages/spgwr/index.html) using [Geographically Weighted Regression](https://rss.onlinelibrary.wiley.com/doi/abs/10.1111/1467-9884.00145). GWR allows for the identification of areas reporting a relatively high number of cases, in relation to the average UTLA in England at a given point in time. You can find the full code for the quassi-poisson GWR analysis [here](https://github.com/fcorowe/covid19_hi/blob/main/analysis/gwr.rmd). ThE code was adapted and exlained further in the [Spatial Analysis course materials](https://gdsl-ul.github.io/san/geographically-weighted-regression.html). 
 
 Variable  descriptor   | Unit                  | Source               | Included in GWR? |
 :---------------------- | :--------------------- | :--------------------  | :-------------------- |
