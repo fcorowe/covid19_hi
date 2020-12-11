@@ -45,4 +45,10 @@ Low income children    | Children in low income families under 16 years | [PHE](
 Multiple deprivation   | Proportion of LSOA in UTLA in 10% most deprived | [IMD 2019](https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019)| Y
 Population density | % residents per hectare | [2011 Census](https://www.nomisweb.co.uk/census/2011)| Y
 
+## Descriptive figures
+
+A range of descriptive maps, figures and tables were created prior to the GWR analysis. Access the code here. 
+
+![Relative_maps_new](https://user-images.githubusercontent.com/57355504/101910584-09899e80-3bb7-11eb-85ff-1577393c3a6b.jpg)
+
 
