@@ -16,7 +16,7 @@ These datasets are combined into two tables for the analysis: [daily covid cases
 ## Contextual indicators
 
 | Variable  descriptor   | Unit                  | Source               |
-|:---------------------- | :--------------------- | :--------------------  | 
+|:---------------------- | :--------------------- | :--------------------  |
 Private renting        | % households          | [2011 Census](https://www.nomisweb.co.uk/census/2011)|
 Social renting         | % households          | [2011 Census](https://www.nomisweb.co.uk/census/2011)|
 Overcrowding           | % households          | [2011 Census](https://www.nomisweb.co.uk/census/2011)|
