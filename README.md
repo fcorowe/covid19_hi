@@ -20,6 +20,7 @@ The policy brief analyses the geography of the COVID-19 pandemic in England focu
 ![IMD_bump_final](https://user-images.githubusercontent.com/57355504/101911268-0e9b1d80-3bb8-11eb-82e3-e97532137b1e.jpg)
 
 **Recommended Citation**
+```
 @software{robinson_el_al_2020,
   author = {Caitlin Robinson and Francisco Rowe and Nikos Patias},
   title = {Modelling the spatial patterns of COVID-19 in England},
@@ -27,3 +28,4 @@ The policy brief analyses the geography of the COVID-19 pandemic in England focu
   version = {1.0},
   date = {17-12-2020},
 }
+```
