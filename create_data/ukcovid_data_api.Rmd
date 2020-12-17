@@ -287,7 +287,7 @@ UTLA_deaths_Eng <- MSOA_w_UTLA %>%
 First we combine the covid cases and IMD data
 
 ```{r}
-# make sure that  the area name is character so we can combine the covid cases with IMD scores
+# ensure that  the area name is character so we can combine the covid cases with IMD scores
 Eng_case_tot_case_wide$name <- as.character(Eng_case_tot_case_wide$name)
 Eng_case_tot_case_wide_w_IMD <- merge(x = Eng_case_tot_case_wide , y = IMD, by.x = "name",by.y = "Upper Tier Local Authority District name (2019)", all.x = TRUE)
 ```
@@ -309,7 +309,6 @@ We then combine the previous file with the UTLA polygons so we can plot the data
 
 ```{r}
 # this is using dplyr
-# I found it better as it maintains the column names
 Covid19_total_cases_geo <- inner_join(Eng_shp, Eng_case_tot_case_wide_w_IMD_Census, by = c("ctyua19nm" = "name"))
 ```
 
@@ -324,7 +323,7 @@ st_write(Covid19_total_cases_geo, "output/total.csv")
 First we combine the covid cases and IMD data
 
 ```{r}
-# make sure that  the area name is character so we can combine the covid cases with IMD scores
+# ensure that  the area name is character so we can combine the covid cases with IMD scores
 Eng_case_day_case_wide$name <- as.character(Eng_case_day_case_wide$name)
 Eng_case_day_case_wide_w_IMD <- merge(x = Eng_case_day_case_wide , y = IMD, by.x = "name",by.y = "Upper Tier Local Authority District name (2019)", all.x = TRUE)
 ```
@@ -341,7 +340,6 @@ We then combine the previous file with the UTLA polygons so we can plot the data
 
 ```{r}
 # this is using dplyr
-# I found it better as it maintains the column names
 Covid19_daily_cases_geo <- inner_join(Eng_shp, Eng_case_day_case_wide_w_IMD_Census, by = c("ctyua19nm" = "name"))
 ```
 
@@ -352,14 +350,3 @@ st_write(Covid19_daily_cases_geo, "Covid19_daily_cases_geo.shp")
 st_write(Covid19_daily_cases_geo, "daily.csv")
 ```
 
-### Add Apple mobility trends
-The data downloaded on 23/4/2020 from https://www.apple.com/covid19/mobility
-```{r}
-apple_mobility <- read.csv("applemobilitytrends-2020-04-21.csv", check.names = FALSE)
-```
-
-```{r}
-# select the areas we are interested
-apple_mobility_UK <- subset(apple_mobility, region %in% c("UK", "London", "Manchester",
-                                                          "Leeds", "Birmingham - UK"))
-```
