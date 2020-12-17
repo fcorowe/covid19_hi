@@ -21,6 +21,16 @@ The policy brief analyses the geography of the COVID-19 pandemic in England focu
 
 **Recommended Citation**
 
+If you refer to evidence in the policy brief:
+```
+@software{robinson_el_al_2020,
+  author = {Caitlin Robinson and Francisco Rowe and Nikos Patias},
+  title = {The Geography of the COVID-19 Pandemic in England},
+  url = {https://www.liverpool.ac.uk/media/livacuk/publicpolicyamppractice/covid-19/PB034.pdf},
+  date = {17-12-2020},
+}
+```
+
 If you used the code in this repository:
 ```
 @software{robinson_el_al_2020,
@@ -32,12 +42,4 @@ If you used the code in this repository:
 }
 ```
 
-If you refer to evidence in the policy brief:
-```
-@software{robinson_el_al_2020,
-  author = {Caitlin Robinson and Francisco Rowe and Nikos Patias},
-  title = {The Geography of the COVID-19 Pandemic in England},
-  url = {https://www.liverpool.ac.uk/media/livacuk/publicpolicyamppractice/covid-19/PB034.pdf},
-  date = {17-12-2020},
-}
-```
+
