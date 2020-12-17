@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/320265613.svg)](https://zenodo.org/badge/latestdoi/320265613)
+
 # The Geography of the COVID-19 Pandemic in England
 
 [Caitlin Robinson](https://www.caitlin-h-robinson.com/)[[`@CaitHRobin`](https://twitter.com/CaitHRobin)]<sup>1</sup>, [Francisco Rowe](http://www.franciscorowe.com) [[`@fcorowe`](http://twitter.com/fcorowe)]<sup>1</sup>, Nikos Patias [[`@pat_nikos`](https://twitter.com/pat_nikos)]<sup>1</sup>
@@ -17,3 +19,11 @@ The policy brief analyses the geography of the COVID-19 pandemic in England focu
 
 ![IMD_bump_final](https://user-images.githubusercontent.com/57355504/101911268-0e9b1d80-3bb8-11eb-82e3-e97532137b1e.jpg)
 
+**Recommended Citation**
+@software{robinson_el_al_2020,
+  author = {Caitlin Robinson and Francisco Rowe and Nikos Patias},
+  title = {Modelling the spatial patterns of COVID-19 in England},
+  url = {http://doi.org/10.5281/zenodo.4333313},
+  version = {1.0},
+  date = {17-12-2020},
+}
