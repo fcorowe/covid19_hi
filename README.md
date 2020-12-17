@@ -20,12 +20,24 @@ The policy brief analyses the geography of the COVID-19 pandemic in England focu
 ![IMD_bump_final](https://user-images.githubusercontent.com/57355504/101911268-0e9b1d80-3bb8-11eb-82e3-e97532137b1e.jpg)
 
 **Recommended Citation**
+
+If you used the code in this repository:
 ```
 @software{robinson_el_al_2020,
-  author = {Caitlin Robinson and Francisco Rowe and Nikos Patias},
+  author = {Francisco Rowe and Caitlin Robinson and Nikos Patias},
   title = {Modelling the spatial patterns of COVID-19 in England},
   url = {http://doi.org/10.5281/zenodo.4333313},
   version = {1.0},
+  date = {17-12-2020},
+}
+```
+
+If you refer to evidence in the policy brief:
+```
+@software{robinson_el_al_2020,
+  author = {Caitlin Robinson and Francisco Rowe and Nikos Patias},
+  title = {The Geography of the COVID-19 Pandemic in England},
+  url = {https://www.liverpool.ac.uk/media/livacuk/publicpolicyamppractice/covid-19/PB034.pdf},
   date = {17-12-2020},
 }
 ```
